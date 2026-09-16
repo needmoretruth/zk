@@ -23,6 +23,7 @@ sys-winterfell = { path = "../sys-winterfell" }
 sys-miden = { path = "../sys-miden" }
 sys-plonky3 = { path = "../sys-plonky3" }
 sys-circle-stark = { path = "../sys-circle-stark" }
+sys-zkboo = { path = "../sys-zkboo" }
 sys-gm17 = { path = "../sys-gm17" }
 sys-bulletproofs = { path = "../sys-bulletproofs" }
 sys-stark = { path = "../sys-stark" }
