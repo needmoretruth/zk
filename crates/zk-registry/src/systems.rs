@@ -18,11 +18,13 @@ pub(crate) static SYSTEMS: &[&dyn ProofSystem] = &[
     &sys_ultraplonk::UltraPlonk,
     // Polygon
     &sys_winterfell::Winterfell,
+    &sys_miden::MidenVm,
     &sys_plonky3::Plonky3,
     &sys_circle_stark::CircleStark,
     // Others
     &sys_gm17::Gm17,
     &sys_bulletproofs::Bulletproofs,
+    &sys_stark::Stark,
     &sys_spartan::Spartan,
     &sys_marlin::Marlin,
     &sys_nova::Nova,

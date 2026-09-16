@@ -60,6 +60,8 @@ ignore = [
     # tracing-subscriber 0.2 comes with ark-relations 0.5 for jellyfish. The flaw is in formatting logged
     # input for a terminal; this program installs no subscriber and logs nothing, so that code never runs.
     { id = "RUSTSEC-2025-0055", reason = "no tracing subscriber is installed; nothing is logged" },
+    # lambdaworks' STARK prover lists serde_cbor as a dependency but never calls it; proofs are written with bincode.
+    { id = "RUSTSEC-2021-0127", reason = "unmaintained, required by stark-platinum-prover but never called; no known vulnerability" },
 ]
 
 # lambdaworks-plonk inherits no license field from its manifest; the repository is Apache-2.0

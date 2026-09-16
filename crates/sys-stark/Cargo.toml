@@ -1,0 +1,26 @@
+[package]
+name = "sys-stark"
+description = "STARK (2018) as ethSTARK describes it, run by lambdaworks' Stark252 prover on the museum's seven statements, without hiding."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+# lambdaworks' STARK prover (`crates/provers/stark`, package `stark-platinum-prover`) is not published to
+# crates.io; it and lambdaworks-math come from the one commit the PLONK exhibit already pins.
+# `parallel` is lambdaworks' own switch for multi-threaded FFTs, Merkle trees and grinding.
+stark-platinum-prover = { git = "https://github.com/lambdaclass/lambdaworks", rev = "3a87850dc405e12ab6c4bbaeba68d52815ab1158", features = ["parallel"] }
+lambdaworks-math = { git = "https://github.com/lambdaclass/lambdaworks", rev = "3a87850dc405e12ab6c4bbaeba68d52815ab1158", default-features = false, features = ["std"] }
+# The serializer lambdaworks' own STARK command-line prover wrote proofs with (`bincode::serde` with
+# `config::standard()`), in the major version the prover crate itself depends on.
+bincode = { version = "2.0.1", features = ["serde"] }
+
+[lints]
+workspace = true

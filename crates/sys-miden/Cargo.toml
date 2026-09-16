@@ -1,0 +1,33 @@
+[package]
+name = "sys-miden"
+description = "Miden VM, which is not zero-knowledge, running the museum's seven statements as Miden Assembly programs."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+# The components the `miden-vm` crate re-exports, taken one by one. The facade turns on the
+# assembler's `std` feature, which pulls the package resolver `pubgrub` (MPL-2.0) into the build;
+# without `std` the assembler compiles the same Miden Assembly and nothing MPL is linked.
+miden-assembly = { version = "0.32.1", default-features = false }
+miden-core = "0.32.1"
+miden-crypto = { version = "0.32.1", default-features = false }
+miden-processor = "0.32.1"
+miden-prover = "0.32.1"
+miden-verifier = "0.32.1"
+# Used only to read the STARK proof bytes the way `miden-verifier` does, to find a byte to flip.
+miden-serde-utils = "0.32.1"
+serde-wincode = { version = "0.1.2", default-features = false, features = ["alloc"] }
+# Not used directly. miden-crypto's Blake3 comes from this crate, whose build script otherwise
+# assembles SIMD code with the system C compiler; `pure` keeps it to Rust alone.
+blake3 = { version = "1.8", default-features = false, features = ["pure"] }
+
+[lints]
+workspace = true
