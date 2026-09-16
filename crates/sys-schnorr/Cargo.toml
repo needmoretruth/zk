@@ -1,0 +1,28 @@
+[package]
+name = "sys-schnorr"
+description = "Schnorr proofs and sigma protocols as Zcash's spend authorization uses them: sigma-proofs over Pallas, with a teaching compiler that proves the museum's seven statements over Pedersen commitments."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+# The curve features pull in BLS12-381, Ristretto, secp256k1 and P-256, none of which this exhibit uses.
+sigma-proofs = { version = "0.3.2", default-features = false, features = ["std"] }
+# sigma-proofs 0.3.2 pins sha3 =0.11.0-rc.9 and was released against spongefish 0.7.0; spongefish 0.7.4
+# pins sha3 =0.11.0, and Cargo cannot hold two releases of sha3 0.11 in one build.
+spongefish = { version = "=0.7.0", default-features = false }
+pasta_curves = { version = "0.5.2", features = ["alloc"] }
+ff = "0.13.1"
+group = "0.13.0"
+subtle = "2.6.1"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+
+[lints]
+workspace = true
