@@ -58,6 +58,10 @@ pub use coins::Coins;
 pub use deal::Corrections;
 pub use error::TrioError;
 pub use field::{ELEMENT_BYTES, Fp, MODULUS};
+
+/// The field every Trio value lives in, under the name every exhibit exports it by, so an activity
+/// can compute values for [`zk_core::Prepared::prove_assignment`].
+pub type Field = Fp;
 pub use hash::Bytes32;
 pub use meta::META;
 pub use program::{Claim, Statement};

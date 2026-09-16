@@ -129,3 +129,18 @@ fn the_field_is_accepted_by_the_circuit_layer() {
     assert_eq!(Fp::from_u64(MODULUS), Fp::zero());
     assert_eq!(Fp::decode(&Fp::from_u64(7).to_le_bytes()), Ok(Fp::from_u64(7)));
 }
+
+#[test]
+fn a_caller_supplied_assignment_is_proved_without_being_checked() {
+    let control = Control::new();
+    let mut prepared = Trio.prepare(ExampleId::OnePlusOne, &control).unwrap();
+    for (kind, expected) in
+        [(InstanceKind::Honest, Verdict::Accepted), (InstanceKind::Dishonest, Verdict::Rejected)]
+    {
+        let instance = Instance { example: ExampleId::OnePlusOne, kind, seed: [21; 32] };
+        let sample = prepared.prove(&instance, &control).unwrap();
+        let proven = prepared.prove_assignment(&sample.public, &sample.secrets, &control).unwrap();
+        assert_eq!(proven.secrets, sample.secrets);
+        assert_eq!(prepared.verify(&proven.public, &proven.proof, &control).unwrap(), expected);
+    }
+}

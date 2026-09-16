@@ -1,7 +1,7 @@
 //! Trio in the museum's harness: prepare builds the statement, prove makes the 109-round
 //! non-interactive proof, verify checks it.
 
-use zk_circuit::ZkField;
+use zk_circuit::{Assignment, ZkField};
 use zk_core::catalog::SystemMeta;
 use zk_core::{
     CircuitShape, Control, ExampleId, FieldBytes, Instance, Prepared, ProofSystem, Proven,
@@ -43,6 +43,25 @@ fn decode_all(values: &[FieldBytes]) -> Result<Vec<Fp>, String> {
     values.iter().map(|bytes| Fp::decode(bytes)).collect()
 }
 
+impl Ready {
+    /// Proves one assignment of the prepared statement, true or not; a false one is left for the
+    /// verifier to turn down.
+    fn prove_assigned(
+        &self,
+        assignment: &Assignment<Fp>,
+        control: &Control,
+    ) -> Result<Proven, SystemError> {
+        let claim = self.statement.claim(assignment)?;
+        let proof = prove(&self.statement, &claim, &mut Coins::os(), control)?;
+        let encode = |values: &[Fp]| values.iter().map(|v| v.to_le_bytes()).collect();
+        Ok(Proven {
+            proof,
+            public: encode(&assignment.public),
+            secrets: encode(&assignment.private),
+        })
+    }
+}
+
 impl Prepared for Ready {
     fn shape(&self) -> CircuitShape {
         let statement = &self.statement;
@@ -63,14 +82,18 @@ impl Prepared for Ready {
             return Err(SystemError::Failed(format!("prepared for {prepared}, asked for {asked}")));
         }
         let assignment = instance.example.instance::<Fp>(instance.kind, &instance.seed);
-        let claim = self.statement.claim(&assignment)?;
-        let proof = prove(&self.statement, &claim, &mut Coins::os(), control)?;
-        let encode = |values: &[Fp]| values.iter().map(|v| v.to_le_bytes()).collect();
-        Ok(Proven {
-            proof,
-            public: encode(&assignment.public),
-            secrets: encode(&assignment.private),
-        })
+        self.prove_assigned(&assignment, control)
+    }
+
+    fn prove_assignment(
+        &mut self,
+        public: &[FieldBytes],
+        private: &[FieldBytes],
+        control: &Control,
+    ) -> Result<Proven, SystemError> {
+        let decoded = decode_all(public).and_then(|public| Ok((public, decode_all(private)?)));
+        let (public, private) = decoded.map_err(SystemError::Failed)?;
+        self.prove_assigned(&Assignment { public, private }, control)
     }
 
     fn verify(

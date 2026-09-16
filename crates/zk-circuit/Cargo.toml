@@ -6,6 +6,8 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
 
 [dependencies]
 sha2 = { version = "0.11", default-features = false }
