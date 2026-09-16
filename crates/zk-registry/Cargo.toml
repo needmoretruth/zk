@@ -1,0 +1,18 @@
+[package]
+name = "zk-registry"
+description = "The proof systems built into this program, in shelf order, and the pages that describe them."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+build = "build.rs"
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-i18n = { path = "../zk-i18n" }
+
+[lints]
+workspace = true

@@ -1,0 +1,26 @@
+[package]
+name = "nmtzk"
+description = "A working museum of zero-knowledge proof systems: read their history, then run every one of them on your own machine."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[[bin]]
+name = "nmtzk"
+path = "src/main.rs"
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-i18n = { path = "../zk-i18n" }
+zk-registry = { path = "../zk-registry" }
+zk-tui = { path = "../zk-tui" }
+clap = { version = "4.6", features = ["derive"] }
+serde = "1.0.229"
+serde_json = "1.0.151"
+
+[lints]
+workspace = true
