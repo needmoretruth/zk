@@ -1,0 +1,23 @@
+[package]
+name = "zk-ceremony"
+description = "The trusted-setup ceremony, run for real: toxic waste forging a Groth16 proof, a Powers of Tau chain anyone can check, and colluders forging a KZG opening."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+bellman = "0.14.0"
+bls12_381 = "0.8.0"
+ff = "0.13.1"
+group = "0.13.0"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+sha2 = { version = "0.11", default-features = false }
+
+[lints]
+workspace = true
