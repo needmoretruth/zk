@@ -6953,11 +6953,21 @@ name = "zk-tui"
 version = "0.0.0"
 dependencies = [
  "crossterm",
+ "getrandom 0.4.3",
  "pulldown-cmark",
  "ratatui",
+ "serde_json",
+ "sys-bctv14",
+ "sys-groth16",
+ "sys-halo2",
  "unicode-width 0.2.2",
+ "zk-cave",
+ "zk-ceremony",
+ "zk-circuit",
  "zk-core",
  "zk-i18n",
+ "zk-pool",
+ "zk-trio",
 ]
 
 [[package]]
