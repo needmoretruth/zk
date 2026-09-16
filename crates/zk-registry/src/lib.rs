@@ -73,6 +73,37 @@ mod tests {
         }
     }
 
+    /// The page's summary line and the catalogue entry are two copies of the same facts; the
+    /// entry is the source, so a page that disagrees with it fails here rather than in a reader's
+    /// hands.
+    #[test]
+    fn every_page_states_the_shelf_and_year_the_catalogue_gives() {
+        for system in systems() {
+            let meta = system.meta();
+            for language in [Language::ENGLISH, Language::KOREAN] {
+                let Some(page) = pages::find(meta.id, language.code()) else { continue };
+                let summary: Vec<&str> =
+                    page.lines().filter(|line| line.starts_with('>')).collect();
+                let summary = summary.join(" ");
+                let shelf = format!("{:?}", meta.shelf);
+                assert!(
+                    summary.contains(&shelf),
+                    "{} ({}) does not name shelf {shelf}",
+                    meta.id,
+                    language.code()
+                );
+                let year = format!(":** {}", meta.year);
+                assert!(
+                    summary.contains(&year),
+                    "{} ({}) does not state year {}",
+                    meta.id,
+                    language.code(),
+                    meta.year
+                );
+            }
+        }
+    }
+
     #[test]
     fn unknown_ids_have_neither_system_nor_page() {
         assert!(system("no-such-system").is_none());

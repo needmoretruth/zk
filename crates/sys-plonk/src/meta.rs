@@ -8,7 +8,7 @@ use zk_core::catalog::{
 /// The lambdaworks commit this exhibit is built from; `Cargo.toml` pins the same revision.
 pub const LAMBDAWORKS_REV: &str = "3a87850dc405e12ab6c4bbaeba68d52815ab1158";
 
-/// PLONK's catalogue entry. The values are provisional; the museum's editor owns the facts.
+/// PLONK's catalogue entry, checked against the listed sources on 2026-09-16.
 pub static META: SystemMeta = SystemMeta {
     id: "plonk",
     name: "PLONK",
@@ -35,6 +35,9 @@ pub static META: SystemMeta = SystemMeta {
     },
     status: Status::Active,
     status_as_of: "2026-09",
-    status_sources: &["https://eprint.iacr.org/2019/953"],
+    status_sources: &[
+        "https://eprint.iacr.org/2019/953",
+        "https://github.com/AztecProtocol/aztec-packages/pull/14205",
+    ],
     deployments: &[],
 };

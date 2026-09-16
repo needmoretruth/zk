@@ -60,7 +60,7 @@ pub use proof::Proof;
 /// The BCTV14 proof system exhibit.
 pub struct Bctv14;
 
-/// Everything the museum records about this exhibit. Provisional values; the editor corrects facts.
+/// Everything the museum records about this exhibit, checked against the listed sources on 2026-09-16.
 ///
 /// Marked a teaching implementation (built on the arkworks primitives) and superseded by Groth16
 /// when Zcash's Sapling upgrade activated on 2018-10-28.
@@ -68,7 +68,7 @@ pub static META: SystemMeta = SystemMeta {
     id: "bctv14",
     name: "BCTV14 (Pinocchio)",
     shelf: Shelf::Zcash,
-    year: 2014,
+    year: 2013,
     authors: &["Eli Ben-Sasson", "Alessandro Chiesa", "Eran Tromer", "Madars Virza"],
     paper: Some(Paper {
         title: "Succinct Non-Interactive Zero Knowledge for a von Neumann Architecture",

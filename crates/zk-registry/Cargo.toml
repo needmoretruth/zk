@@ -13,6 +13,17 @@ build = "build.rs"
 [dependencies]
 zk-core = { path = "../zk-core" }
 zk-i18n = { path = "../zk-i18n" }
+sys-schnorr = { path = "../sys-schnorr" }
+sys-bctv14 = { path = "../sys-bctv14" }
+sys-groth16 = { path = "../sys-groth16" }
+sys-halo2 = { path = "../sys-halo2" }
+sys-plonk = { path = "../sys-plonk" }
+sys-ultraplonk = { path = "../sys-ultraplonk" }
+sys-plonky3 = { path = "../sys-plonky3" }
+sys-bulletproofs = { path = "../sys-bulletproofs" }
+sys-spartan = { path = "../sys-spartan" }
+zk-cave = { path = "../zk-cave" }
+zk-trio = { path = "../zk-trio" }
 
 [lints]
 workspace = true

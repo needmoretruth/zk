@@ -4109,8 +4109,19 @@ dependencies = [
 name = "zk-registry"
 version = "0.0.0"
 dependencies = [
+ "sys-bctv14",
+ "sys-bulletproofs",
+ "sys-groth16",
+ "sys-halo2",
+ "sys-plonk",
+ "sys-plonky3",
+ "sys-schnorr",
+ "sys-spartan",
+ "sys-ultraplonk",
+ "zk-cave",
  "zk-core",
  "zk-i18n",
+ "zk-trio",
 ]
 
 [[package]]

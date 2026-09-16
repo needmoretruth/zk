@@ -5,7 +5,7 @@ use zk_core::catalog::{
     TrustedSetup, ZeroKnowledge,
 };
 
-/// Halo 2's catalogue entry. The values are provisional; the museum's editor owns the facts.
+/// Halo 2's catalogue entry, checked against the listed sources on 2026-09-16.
 pub static META: SystemMeta = SystemMeta {
     id: "halo2",
     name: "Halo 2",
