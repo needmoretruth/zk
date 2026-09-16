@@ -1,0 +1,20 @@
+[package]
+name = "sys-groth16"
+description = "Groth16 as Zcash Sapling runs it: bellman over BLS12-381, proving the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+bellman = "0.14.0"
+bls12_381 = "0.8.0"
+ff = "0.13.1"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+
+[lints]
+workspace = true

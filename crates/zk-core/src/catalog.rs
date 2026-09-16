@@ -137,7 +137,8 @@ pub enum Mode {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "kind")]
 pub enum Implementation {
-    /// The Rust implementation by the system's authors or the de facto standard one, used as is.
+    /// An existing open-source Rust implementation used as is: the authors' own, the de facto standard
+    /// one, or a third party's. The system's page says whose it is.
     Upstream {
         /// Crate or repository name.
         name: &'static str,
