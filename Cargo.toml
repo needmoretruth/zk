@@ -1,0 +1,34 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+# One number for the whole program, and it moves only when something is pushed.
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.98.1"
+license = "Apache-2.0"
+repository = "https://github.com/needmoretruth/zk"
+description = "A working museum of zero-knowledge proof systems: read their history, then run every one of them on your own machine."
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+
+[profile.dev]
+opt-level = 1
+
+# Field and curve arithmetic is unusably slow unoptimised: a proof that takes a second in
+# release takes minutes in a plain debug build, and the tests would look hung. Dependencies
+# are optimised even in development; this workspace's own code stays debuggable.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
