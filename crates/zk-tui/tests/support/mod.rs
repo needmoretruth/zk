@@ -24,7 +24,8 @@ use zk_i18n::Language;
 use zk_tui::{App, Look, Museum, Settings};
 
 const PUBLIC: [u8; 4] = [9, 0, 0, 0];
-const SECRET: [u8; 5] = [2, 0, 0, 0, 0];
+// Three significant bytes: the scan skips values below 2^16, which turn up in proofs by chance.
+const SECRET: [u8; 5] = [2, 0, 1, 0, 0];
 
 /// A system that proves instantly; `slow` waits in setup until it is cancelled.
 pub struct StandIn {

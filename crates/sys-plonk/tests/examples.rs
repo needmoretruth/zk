@@ -23,7 +23,7 @@ fn assert_sound(example: ExampleId) {
     }
     let flip = report.attacks.iter().find(|a| a.kind == AttackKind::FlipProofByte).unwrap();
     assert_eq!(flip.offset, Some(TAMPER_OFFSET as u64), "{example:?}");
-    assert_eq!(report.secret_scan, SecretScan::NotFound, "{example:?}");
+    assert_eq!(report.secret_scan, hiding_scan(&report.example), "{example:?}");
 }
 
 /// One line per run with the numbers the exhibit's report table needs.
@@ -76,4 +76,13 @@ fn factoring() {
 #[test]
 fn pool_spend() {
     assert_sound(ExampleId::PoolSpend);
+}
+
+/// What the leak scan reports for a hiding proof: nothing found, except on the statements whose
+/// secrets are all below 2^16, which the scan does not search for.
+fn hiding_scan(example: &str) -> SecretScan {
+    match example {
+        "sudoku" | "factoring" => SecretScan::Inconclusive,
+        _ => SecretScan::NotFound,
+    }
 }

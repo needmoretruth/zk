@@ -54,7 +54,14 @@ fn a_verifier_that_accepts_anything_is_reported_as_broken() {
 #[test]
 fn a_proof_that_carries_its_secrets_is_caught_by_the_scan() {
     let report = run(Behaviour::Leaky, ExampleId::OnePlusOne);
-    assert_eq!(report.secret_scan, SecretScan::Found(vec!["answer".into(), "salt".into()]));
+    // The answer, 2, is too small to search for; the salt is not.
+    assert_eq!(report.secret_scan, SecretScan::Found(vec!["salt".into()]));
+}
+
+#[test]
+fn a_statement_whose_secrets_are_all_small_is_inconclusive_even_when_they_leak() {
+    let report = run(Behaviour::Leaky, ExampleId::Sudoku);
+    assert_eq!(report.secret_scan, SecretScan::Inconclusive);
 }
 
 #[test]

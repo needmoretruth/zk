@@ -43,9 +43,16 @@ pub fn scan_secrets(
     }
 }
 
-/// 0 and 1 are in every proof; searching for them says nothing.
+/// Values below 2^16 are not searched: a match would prove nothing.
+///
+/// Such a value is at most two non-zero bytes followed by zeros, and proofs are full of zeros next to
+/// small numbers — zero evaluations, padding, length and count fields. Measured on this museum's
+/// exhibits, a sudoku cell or a factor of 181 turned up by chance in proofs that hide them perfectly
+/// well. A value of three or more significant bytes next to such a run matches by chance about once
+/// in 2^24 tries, so a hit on it is evidence. An example whose secrets are all small is reported as
+/// [`SecretScan::Inconclusive`] rather than clean.
 fn is_trivial(secret: &FieldBytes) -> bool {
-    secret.iter().skip(1).all(|byte| *byte == 0) && secret.first().is_none_or(|byte| *byte <= 1)
+    secret.iter().skip(2).all(|byte| *byte == 0)
 }
 
 fn contains(haystack: &[u8], needle: &[u8]) -> bool {

@@ -66,7 +66,8 @@ pub enum SecretScan {
     NotFound,
     /// These private inputs appear verbatim.
     Found(Vec<String>),
-    /// Every secret was 0 or 1, which appear everywhere and prove nothing.
+    /// Every secret was below 2^16, small enough to turn up in any proof by chance, so a search
+    /// could prove nothing either way.
     Inconclusive,
 }
 

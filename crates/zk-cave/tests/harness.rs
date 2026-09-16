@@ -37,7 +37,7 @@ fn check(example: ExampleId, bumped: AttackOutcome) -> RunReport {
     assert!(matches!(outcome(AttackKind::FlipProofByte), AttackOutcome::NotApplicable(_)));
     assert_eq!(outcome(AttackKind::BumpPublicInput), &bumped);
     assert_eq!(outcome(AttackKind::DishonestWitness), &AttackOutcome::Rejected);
-    assert_eq!(report.secret_scan, SecretScan::NotFound);
+    assert_eq!(report.secret_scan, hiding_scan(&report.example));
     report
 }
 
@@ -86,4 +86,13 @@ fn factoring() {
 #[test]
 fn pool_spend() {
     assert!(check(ExampleId::PoolSpend, AttackOutcome::Rejected).sound());
+}
+
+/// What the leak scan reports for a hiding proof: nothing found, except on the statements whose
+/// secrets are all below 2^16, which the scan does not search for.
+fn hiding_scan(example: &str) -> SecretScan {
+    match example {
+        "sudoku" | "factoring" => SecretScan::Inconclusive,
+        _ => SecretScan::NotFound,
+    }
 }

@@ -67,7 +67,7 @@ zk_i18n::messages! {
     ScanNotFound { en: "no secret appears byte for byte in the proof" },
     ScanFound { en: "found byte for byte in the proof: {names}" },
     ScanFoundExpected { en: "expected: this system is not zero-knowledge as run here" },
-    ScanInconclusive { en: "every secret was 0 or 1, which appear in every proof, so the scan says nothing" },
+    ScanInconclusive { en: "every secret here is below 65,536, small enough to turn up in any proof by chance, so the scan cannot tell" },
     ScanSmoke { en: "A smoke detector, not a proof of zero knowledge." },
     Adapted { en: "Adapted statement: {note}" },
     Unsupported { en: "{system} does not prove {example}: {reason}" },
