@@ -1,0 +1,23 @@
+[package]
+name = "zk-cave"
+description = "Ali Baba's cave as the 1989 paper tells it: a forked cave, a magic wall, a reporter's coin, and two tapes nobody could tell apart."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+p3-field = "0.7.0"
+p3-goldilocks = "0.7.0"
+getrandom = { version = "0.4", features = ["sys_rng"] }
+rand_core = "0.10"
+
+[dev-dependencies]
+rand_chacha = "0.10"
+
+[lints]
+workspace = true

@@ -31,3 +31,19 @@ fn two_seeds_seal_the_same_answer_in_different_envelopes() {
     let age_two = ExampleId::Age.instance::<Bn254>(InstanceKind::Honest, &[2; 32]);
     assert_ne!(age_one.public[2], age_two.public[2], "the credentials differ");
 }
+
+fn moving_the_falsifying_input_breaks_the_claim<F: ZkField>() {
+    for example in ExampleId::ALL {
+        let circuit = example.circuit::<F>().unwrap();
+        let mut claim = example.instance::<F>(InstanceKind::Honest, &[4; 32]);
+        let index = example.falsifying_public_index();
+        claim.public[index] = claim.public[index].add(F::one());
+        assert!(circuit.evaluate(&claim).is_err(), "{} still holds", example.id());
+    }
+}
+
+#[test]
+fn the_attacked_public_input_turns_every_claim_false_on_both_fields() {
+    moving_the_falsifying_input_breaks_the_claim::<Bn254>();
+    moving_the_falsifying_input_breaks_the_claim::<BabyBear>();
+}

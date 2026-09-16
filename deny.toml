@@ -1,0 +1,49 @@
+# What this workspace accepts from its dependencies, checked by `cargo deny check`.
+#
+# The museum links code from many ecosystems. A licence that obliges derived works to be released
+# under the same terms, or restricts hosting, cannot enter the binary, and a crate that compiles C or
+# C++ cannot either (checked separately in review). Everything below is permissive.
+
+[graph]
+all-features = false
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unlicense",
+    "CC0-1.0",
+    # unicode-ident, pulled in by nearly every procedural macro; permissive, see the decision log.
+    "Unicode-3.0",
+    # foldhash, pulled in by hashbrown; permissive, see the decision log.
+    "Zlib",
+]
+confidence-threshold = 0.9
+
+[bans]
+# Proof systems from different ecosystems pin different majors of the same crates on purpose.
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+# Git dependencies are allowed only from repositories named here, each pinned to a commit.
+allow-git = [
+    # lambdaworks: the PLONK exhibit (Apache-2.0 at the repository root).
+    "https://github.com/lambdaclass/lambdaworks",
+]
+
+[advisories]
+yanked = "warn"
+
+# lambdaworks-plonk inherits no license field from its manifest; the repository is Apache-2.0
+# (LICENSE at its root and `license = "Apache-2.0"` in the workspace manifest).
+[[licenses.clarify]]
+crate = "lambdaworks-plonk"
+expression = "Apache-2.0"
+license-files = []

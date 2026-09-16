@@ -82,6 +82,19 @@ impl ExampleId {
         Self::ALL.into_iter().find(|example| example.id() == id)
     }
 
+    /// Which public input the attack set changes: one whose change turns the honest claim false.
+    ///
+    /// Changing just any public input is not an attack on every statement. Being 18 or older in 2026
+    /// still holds in 2027, so a live verifier who is shown `age` with the year moved on is right to be
+    /// convinced. The issuer's credential, by contrast, binds the birth year: change it and no witness
+    /// satisfies the claim. For the other examples the first public input already binds the witness.
+    pub fn falsifying_public_index(self) -> usize {
+        match self {
+            Self::Age => 2,
+            _ => 0,
+        }
+    }
+
     /// Public input names in declaration order.
     pub fn public_input_names(self) -> Vec<String> {
         match self {

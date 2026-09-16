@@ -116,7 +116,9 @@ fn attack_non_interactive(
 
     let kind = AttackKind::BumpPublicInput;
     control.report(Stage::Attack(kind));
-    let outcome = match bumped(prepared, &proven.public).map_err(|e| attack_fail(kind, e))? {
+    let outcome = match bumped(prepared, honest.example, &proven.public)
+        .map_err(|e| attack_fail(kind, e))?
+    {
         None => AttackOutcome::NotApplicable("the example has no public input".to_string()),
         Some(public) => from_verdict(
             prepared.verify(&public, &proven.proof, control).map_err(|e| attack_fail(kind, e))?,
@@ -165,7 +167,9 @@ fn interactive(
         });
         let kind = AttackKind::BumpPublicInput;
         control.report(Stage::Attack(kind));
-        let outcome = match bumped(prepared, &played.public).map_err(|e| attack_fail(kind, e))? {
+        let outcome = match bumped(prepared, honest.example, &played.public)
+            .map_err(|e| attack_fail(kind, e))?
+        {
             None => AttackOutcome::NotApplicable("the example has no public input".to_string()),
             Some(public) => from_verdict(
                 prepared
@@ -201,13 +205,16 @@ fn interactive(
     })
 }
 
+/// The public inputs with the example's falsifying input moved on by one ([`ExampleId::falsifying_public_index`]).
 fn bumped(
     prepared: &dyn Prepared,
+    example: ExampleId,
     public: &[FieldBytes],
 ) -> Result<Option<Vec<FieldBytes>>, SystemError> {
-    let Some(first) = public.first() else { return Ok(None) };
+    let index = example.falsifying_public_index();
+    let Some(target) = public.get(index) else { return Ok(None) };
     let mut changed = public.to_vec();
-    changed[0] = prepared.bump_public(first)?;
+    changed[index] = prepared.bump_public(target)?;
     Ok(Some(changed))
 }
 
