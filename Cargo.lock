@@ -1950,6 +1950,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7f5fa3a058cd35567ef9bfa5e75732bee0f9e4c55fa90477bef2dfcdbc4be80"
 dependencies = [
  "chacha20",
+ "getrandom 0.4.3",
  "rand_core 0.10.1",
 ]
 
@@ -2458,7 +2459,6 @@ dependencies = [
 name = "sys-plonky3"
 version = "0.0.0"
 dependencies = [
- "getrandom 0.4.3",
  "p3-air",
  "p3-baby-bear",
  "p3-challenger",

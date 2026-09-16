@@ -1,0 +1,23 @@
+[package]
+name = "sys-bctv14"
+description = "Teaching implementation of the BCTV14 (Pinocchio-variant) preprocessing zk-SNARK Zcash Sprout ran, built from the papers on arkworks BN254."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+ark-bn254 = { version = "0.6", features = ["curve", "std"] }
+ark-ec = { version = "0.6", features = ["std"] }
+ark-ff = { version = "0.6", features = ["std"] }
+ark-poly = { version = "0.6", features = ["std"] }
+ark-serialize = { version = "0.6", features = ["std"] }
+ark-std = { version = "0.6", features = ["std"] }
+getrandom = "0.4"
+
+[lints]
+workspace = true
