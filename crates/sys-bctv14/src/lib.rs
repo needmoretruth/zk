@@ -51,6 +51,10 @@ pub mod qap;
 pub mod verifier;
 
 pub use field::Bn254Fr;
+
+/// The circuit field under the name every exhibit exports it by, so an activity can compute values
+/// for [`zk_core::Prepared::prove_assignment`].
+pub type Field = Bn254Fr;
 pub use proof::Proof;
 
 /// The BCTV14 proof system exhibit.

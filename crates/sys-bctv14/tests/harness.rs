@@ -55,3 +55,19 @@ fn the_flip_lands_inside_the_first_proof_element() {
     assert_eq!(flip.offset, Some(1), "byte 1 sits inside pi_A, which the verifier reads");
     assert!(flip.outcome.held());
 }
+
+#[test]
+fn a_caller_supplied_assignment_is_proved_without_being_checked() {
+    use zk_core::{Instance, InstanceKind};
+    let control = Control::new();
+    let mut prepared = Bctv14.prepare(ExampleId::OnePlusOne, &control).unwrap();
+    for (kind, expected) in
+        [(InstanceKind::Honest, Verdict::Accepted), (InstanceKind::Dishonest, Verdict::Rejected)]
+    {
+        let instance = Instance { example: ExampleId::OnePlusOne, kind, seed: SEED };
+        let sample = prepared.prove(&instance, &control).unwrap();
+        let proven = prepared.prove_assignment(&sample.public, &sample.secrets, &control).unwrap();
+        assert_eq!(proven.secrets, sample.secrets);
+        assert_eq!(prepared.verify(&proven.public, &proven.proof, &control).unwrap(), expected);
+    }
+}

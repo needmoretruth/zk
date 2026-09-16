@@ -9,8 +9,8 @@ use ark_bn254::Fr;
 use ark_serialize::CanonicalSerialize;
 use ark_std::rand::SeedableRng;
 use ark_std::rand::rngs::StdRng;
-use zk_circuit::Circuit;
 use zk_circuit::lower::r1cs::R1cs;
+use zk_circuit::{Assignment, Circuit};
 use zk_core::{
     CircuitShape, Control, ExampleId, FieldBytes, Instance, Prepared, Proven, ShapeForm,
     SystemError, Verdict,
@@ -60,11 +60,10 @@ pub fn prepare(example: ExampleId, control: &Control) -> Result<PreparedBctv14, 
 impl PreparedBctv14 {
     /// The full assignment vector `z` (index 0 the constant one) as arkworks elements, computed
     /// without stopping at a violated assertion so a false witness reaches the real prover.
-    fn assignment(&self, instance: &Instance) -> Result<ProverInputs, SystemError> {
-        let claim = instance.example.instance::<Bn254Fr>(instance.kind, &instance.seed);
+    fn assignment(&self, claim: &Assignment<Bn254Fr>) -> Result<ProverInputs, SystemError> {
         let evaluation = self
             .circuit
-            .evaluate_unchecked(&claim)
+            .evaluate_unchecked(claim)
             .map_err(|e| SystemError::Failed(format!("{e:?}")))?;
         let z: Vec<Fr> =
             self.r1cs.assignment(&evaluation.values).iter().map(|v| v.inner()).collect();
@@ -72,6 +71,36 @@ impl PreparedBctv14 {
         let secrets: Vec<Fr> = claim.private.iter().map(|v| v.inner()).collect();
         Ok(ProverInputs { z, public, secrets })
     }
+
+    /// Proves one assignment, true or not, with fresh prover randomness.
+    fn prove_assigned(
+        &self,
+        claim: &Assignment<Bn254Fr>,
+        control: &Control,
+    ) -> Result<Proven, SystemError> {
+        let inputs = self.assignment(claim)?;
+        let mut rng = os_rng()?;
+        control.checkpoint()?;
+        let proof = prover::prove(&self.pk, &self.r1cs, &inputs.z, &mut rng)
+            .ok_or_else(|| SystemError::Failed("prover failed".into()))?;
+        Ok(Proven {
+            proof: proof.to_bytes(),
+            public: inputs.public.into_iter().map(fr_to_canonical_le).collect(),
+            secrets: inputs.secrets.into_iter().map(fr_to_canonical_le).collect(),
+        })
+    }
+}
+
+/// Canonical little-endian scalars as circuit values; anything else is refused, not reduced.
+fn decode_all(values: &[FieldBytes]) -> Result<Vec<Bn254Fr>, SystemError> {
+    values
+        .iter()
+        .map(|bytes| {
+            fr_from_canonical_le(bytes).map(Bn254Fr).ok_or_else(|| {
+                SystemError::Failed("an input is not a canonical BN254 scalar".into())
+            })
+        })
+        .collect()
 }
 
 impl Prepared for PreparedBctv14 {
@@ -91,16 +120,19 @@ impl Prepared for PreparedBctv14 {
 
     fn prove(&mut self, instance: &Instance, control: &Control) -> Result<Proven, SystemError> {
         control.checkpoint()?;
-        let inputs = self.assignment(instance)?;
-        let mut rng = os_rng()?;
+        let claim = instance.example.instance::<Bn254Fr>(instance.kind, &instance.seed);
+        self.prove_assigned(&claim, control)
+    }
+
+    fn prove_assignment(
+        &mut self,
+        public: &[FieldBytes],
+        private: &[FieldBytes],
+        control: &Control,
+    ) -> Result<Proven, SystemError> {
         control.checkpoint()?;
-        let proof = prover::prove(&self.pk, &self.r1cs, &inputs.z, &mut rng)
-            .ok_or_else(|| SystemError::Failed("prover failed".into()))?;
-        Ok(Proven {
-            proof: proof.to_bytes(),
-            public: inputs.public.into_iter().map(fr_to_canonical_le).collect(),
-            secrets: inputs.secrets.into_iter().map(fr_to_canonical_le).collect(),
-        })
+        let claim = Assignment { public: decode_all(public)?, private: decode_all(private)? };
+        self.prove_assigned(&claim, control)
     }
 
     fn verify(
