@@ -3,8 +3,10 @@
 
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use sys_halo2::{Halo2, PastaFp};
+use sys_halo2::{Field, Halo2, PastaFp};
+use zk_circuit::ZkField;
 use zk_core::{Control, ExampleId, Instance, InstanceKind, ProofSystem, Verdict};
+use zk_examples::one_plus_one::sealed;
 
 fn honest() -> Instance {
     Instance { example: ExampleId::OnePlusOne, kind: InstanceKind::Honest, seed: [3; 32] }
@@ -49,4 +51,30 @@ fn a_transcript_cut_before_the_opening_argument_is_malformed() {
 #[test]
 fn the_field_is_accepted_by_the_circuit_layer() {
     zk_circuit::check_field::<PastaFp>().unwrap();
+}
+
+/// The Toy Shielded Pool proves its own notes this way: the adapter proves exactly the values it is
+/// handed, and a false assignment still becomes a proof for the verifier to turn down.
+#[test]
+fn a_caller_supplied_assignment_is_proved_as_given_and_never_pre_checked() {
+    let control = Control::new();
+    let mut prepared = Halo2.prepare(ExampleId::OnePlusOne, &control).unwrap();
+    let encode = |values: &[Field]| values.iter().map(|v| v.to_le_bytes()).collect::<Vec<_>>();
+    let true_claim = sealed::<Field>(2, 424_242);
+    let proven = prepared
+        .prove_assignment(&encode(&true_claim.public), &encode(&true_claim.private), &control)
+        .unwrap();
+    assert_eq!(proven.public, encode(&true_claim.public));
+    assert_eq!(
+        prepared.verify(&proven.public, &proven.proof, &control).unwrap(),
+        Verdict::Accepted
+    );
+    let false_claim = sealed::<Field>(3, 424_242);
+    let forged = prepared
+        .prove_assignment(&encode(&false_claim.public), &encode(&false_claim.private), &control)
+        .unwrap();
+    assert_eq!(
+        prepared.verify(&forged.public, &forged.proof, &control).unwrap(),
+        Verdict::Rejected
+    );
 }

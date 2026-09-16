@@ -15,6 +15,10 @@ use zk_core::catalog::SystemMeta;
 use zk_core::{Control, ExampleId, Prepared, ProofSystem, SystemError};
 
 pub use field::Fr;
+
+/// The field the statements are built over here, under the name every exhibit exports, so an
+/// activity such as the Toy Shielded Pool can compute values in it without knowing the curve.
+pub type Field = Fr;
 pub use meta::META;
 pub use prepared::TAMPER_OFFSET;
 

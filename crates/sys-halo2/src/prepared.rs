@@ -8,8 +8,8 @@ use halo2_proofs::pasta::{EqAffine, Fp};
 use halo2_proofs::plonk::{Error, SingleVerifier, create_proof, verify_proof};
 use halo2_proofs::transcript::{Blake2bRead, Blake2bWrite, Challenge255};
 use rand_core::OsRng;
-use zk_circuit::Circuit;
 use zk_circuit::lower::plonkish::Plonkish;
+use zk_circuit::{Assignment, Circuit};
 use zk_core::{
     CircuitShape, Control, FieldBytes, Instance, Prepared, Proven, ShapeForm, SystemError, Verdict,
 };
@@ -61,6 +61,27 @@ impl Ready {
         }
     }
 
+    /// Evaluates `assignment` without checking it and hands every cell to `create_proof`.
+    fn prove_values(
+        &self,
+        assignment: &Assignment<PastaFp>,
+        control: &Control,
+    ) -> Result<Proven, SystemError> {
+        let evaluation = self
+            .circuit
+            .evaluate_unchecked(assignment)
+            .map_err(|e| SystemError::Failed(e.to_string()))?;
+        let cells = self.table.cell_values(&evaluation.values);
+        let public: Vec<Fp> = assignment.public.iter().map(|value| value.0).collect();
+        control.checkpoint()?;
+        let proof = self.create(cells, &public)?;
+        Ok(Proven {
+            proof,
+            public: public.into_iter().map(encode).collect(),
+            secrets: assignment.private.iter().map(|value| encode(value.0)).collect(),
+        })
+    }
+
     fn copy_constraints(&self) -> u64 {
         let links: usize = self.table.copy_classes().iter().map(|class| class.len() - 1).sum();
         (links + self.table.num_public_rows()) as u64
@@ -95,19 +116,30 @@ impl Prepared for Ready {
     fn prove(&mut self, instance: &Instance, control: &Control) -> Result<Proven, SystemError> {
         control.checkpoint()?;
         let assignment = instance.example.instance::<PastaFp>(instance.kind, &instance.seed);
-        let evaluation = self
-            .circuit
-            .evaluate_unchecked(&assignment)
-            .map_err(|e| SystemError::Failed(e.to_string()))?;
-        let cells = self.table.cell_values(&evaluation.values);
-        let public: Vec<Fp> = assignment.public.iter().map(|value| value.0).collect();
+        self.prove_values(&assignment, control)
+    }
+
+    /// Decodes the caller's inputs and proves them the way [`Prepared::prove`] proves a sample
+    /// claim: evaluated without checks, so a false assignment still reaches `create_proof`.
+    fn prove_assignment(
+        &mut self,
+        public: &[FieldBytes],
+        private: &[FieldBytes],
+        control: &Control,
+    ) -> Result<Proven, SystemError> {
         control.checkpoint()?;
-        let proof = self.create(cells, &public)?;
-        Ok(Proven {
-            proof,
-            public: public.into_iter().map(encode).collect(),
-            secrets: assignment.private.iter().map(|value| encode(value.0)).collect(),
-        })
+        let decode_all = |values: &[FieldBytes]| -> Result<Vec<PastaFp>, SystemError> {
+            values
+                .iter()
+                .map(|bytes| {
+                    decode(bytes).map(PastaFp).ok_or_else(|| {
+                        SystemError::Failed("an input is not a canonical Pasta Fp".into())
+                    })
+                })
+                .collect()
+        };
+        let assignment = Assignment { public: decode_all(public)?, private: decode_all(private)? };
+        self.prove_values(&assignment, control)
     }
 
     /// `verify_proof` with a `SingleVerifier`, classifying its errors as Halo 2 reports them.

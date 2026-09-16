@@ -12,8 +12,8 @@ use bellman::groth16::{
 use bls12_381::{Bls12, Scalar};
 use ff::Field;
 use rand_core::OsRng;
-use zk_circuit::Circuit;
 use zk_circuit::lower::r1cs::R1cs;
+use zk_circuit::{Assignment, Circuit};
 use zk_core::{
     CircuitShape, Control, ExampleId, FieldBytes, Instance, Prepared, Proven, ShapeForm,
     SystemError, Verdict,
@@ -63,6 +63,40 @@ impl Ready {
         Ok(Self { example, circuit, r1cs, parameters, verifying_key, setup_bytes: counter.0 })
     }
 
+    /// Evaluates `assignment` without checking it and hands every wire to bellman's prover.
+    fn prove_values(
+        &self,
+        assignment: &Assignment<Fr>,
+        control: &Control,
+    ) -> Result<Proven, SystemError> {
+        let evaluation = self
+            .circuit
+            .evaluate_unchecked(assignment)
+            .map_err(|e| SystemError::Failed(e.to_string()))?;
+        let z = self.r1cs.assignment(&evaluation.values);
+        control.checkpoint()?;
+        let synthesis = Synthesis::with_witness(&self.r1cs, &z);
+        let parameters = &self.parameters;
+        let proved = catch_unwind(AssertUnwindSafe(|| {
+            create_random_proof::<Bls12, _, _, _>(synthesis, parameters, &mut OsRng)
+        }));
+        let proof = match proved {
+            Ok(Ok(proof)) => proof,
+            Ok(Err(refusal)) => return Err(SystemError::Unsatisfied(refusal.to_string())),
+            Err(panic) => return Err(SystemError::Unsatisfied(panic_message(panic.as_ref()))),
+        };
+        let mut bytes = Vec::new();
+        proof
+            .write(&mut bytes)
+            .map_err(|e| SystemError::Failed(format!("bellman proof serialization: {e}")))?;
+        let encode = |values: &[Fr]| values.iter().map(|value| field::encode(&value.0)).collect();
+        Ok(Proven {
+            proof: bytes,
+            public: encode(&assignment.public),
+            secrets: encode(&assignment.private),
+        })
+    }
+
     fn decode_public(&self, public: &[FieldBytes]) -> Result<Vec<Scalar>, String> {
         let expected = self.r1cs.num_public_inputs();
         if public.len() != expected {
@@ -97,32 +131,26 @@ impl Prepared for Ready {
             )));
         }
         let assignment = instance.example.instance::<Fr>(instance.kind, &instance.seed);
-        let evaluation = self
-            .circuit
-            .evaluate_unchecked(&assignment)
-            .map_err(|e| SystemError::Failed(e.to_string()))?;
-        let z = self.r1cs.assignment(&evaluation.values);
+        self.prove_values(&assignment, control)
+    }
+
+    /// Decodes the caller's inputs and proves them exactly as [`Prepared::prove`] proves a sample
+    /// claim: evaluated without checks, so a false assignment still reaches bellman's prover.
+    fn prove_assignment(
+        &mut self,
+        public: &[FieldBytes],
+        private: &[FieldBytes],
+        control: &Control,
+    ) -> Result<Proven, SystemError> {
         control.checkpoint()?;
-        let synthesis = Synthesis::with_witness(&self.r1cs, &z);
-        let parameters = &self.parameters;
-        let proved = catch_unwind(AssertUnwindSafe(|| {
-            create_random_proof::<Bls12, _, _, _>(synthesis, parameters, &mut OsRng)
-        }));
-        let proof = match proved {
-            Ok(Ok(proof)) => proof,
-            Ok(Err(refusal)) => return Err(SystemError::Unsatisfied(refusal.to_string())),
-            Err(panic) => return Err(SystemError::Unsatisfied(panic_message(panic.as_ref()))),
+        let decode_all = |values: &[FieldBytes]| -> Result<Vec<Fr>, SystemError> {
+            values
+                .iter()
+                .map(|bytes| field::decode(bytes).map(Fr).map_err(SystemError::Failed))
+                .collect()
         };
-        let mut bytes = Vec::new();
-        proof
-            .write(&mut bytes)
-            .map_err(|e| SystemError::Failed(format!("bellman proof serialization: {e}")))?;
-        let encode = |values: &[Fr]| values.iter().map(|value| field::encode(&value.0)).collect();
-        Ok(Proven {
-            proof: bytes,
-            public: encode(&assignment.public),
-            secrets: encode(&assignment.private),
-        })
+        let assignment = Assignment { public: decode_all(public)?, private: decode_all(private)? };
+        self.prove_values(&assignment, control)
     }
 
     fn verify(

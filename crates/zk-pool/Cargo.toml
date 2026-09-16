@@ -1,6 +1,6 @@
 [package]
-name = "sys-groth16"
-description = "Groth16 as Zcash Sapling runs it: bellman over BLS12-381, proving the museum's seven statements."
+name = "zk-pool"
+description = "The Toy Shielded Pool: a local, valueless shielded ledger to shield, send privately, unshield and attack, proved with Groth16 or Halo 2."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,10 +13,12 @@ publish = false
 zk-core = { path = "../zk-core" }
 zk-circuit = { path = "../zk-circuit" }
 zk-examples = { path = "../zk-examples" }
-bellman = "0.14.0"
-bls12_381 = "0.8.0"
-ff = "0.13.1"
-rand_core = { version = "0.6.4", features = ["getrandom"] }
+sys-groth16 = { path = "../sys-groth16" }
+sys-halo2 = { path = "../sys-halo2" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+getrandom = "0.4"
+hex = "0.4.3"
 
 [lints]
 workspace = true
