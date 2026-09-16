@@ -4709,11 +4709,13 @@ dependencies = [
  "sys-gm17",
  "sys-groth16",
  "sys-halo2",
+ "sys-nova",
  "sys-plonk",
  "sys-plonky3",
  "sys-schnorr",
  "sys-spartan",
  "sys-ultraplonk",
+ "sys-winterfell",
  "zk-cave",
  "zk-core",
  "zk-i18n",
@@ -4738,21 +4740,11 @@ name = "zk-tui"
 version = "0.0.0"
 dependencies = [
  "crossterm",
- "getrandom 0.4.3",
  "pulldown-cmark",
  "ratatui",
- "serde_json",
- "sys-bctv14",
- "sys-groth16",
- "sys-halo2",
  "unicode-width",
- "zk-cave",
- "zk-ceremony",
- "zk-circuit",
  "zk-core",
  "zk-i18n",
- "zk-pool",
- "zk-trio",
 ]
 
 [[package]]
