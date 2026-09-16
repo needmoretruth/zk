@@ -20,6 +20,8 @@ sys-halo2 = { path = "../sys-halo2" }
 sys-plonk = { path = "../sys-plonk" }
 sys-ultraplonk = { path = "../sys-ultraplonk" }
 sys-plonky3 = { path = "../sys-plonky3" }
+sys-circle-stark = { path = "../sys-circle-stark" }
+sys-gm17 = { path = "../sys-gm17" }
 sys-bulletproofs = { path = "../sys-bulletproofs" }
 sys-spartan = { path = "../sys-spartan" }
 zk-cave = { path = "../zk-cave" }

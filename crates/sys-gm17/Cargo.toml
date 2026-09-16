@@ -1,0 +1,24 @@
+[package]
+name = "sys-gm17"
+description = "GM17, Groth16's simulation-extractable sibling: ark-gm17 over BLS12-381, proving the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+ark-gm17 = "0.3.0"
+ark-relations = "0.3.0"
+ark-ff = "0.3.0"
+ark-serialize = "0.3.0"
+ark-bls12-381 = "0.3.0"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+
+[lints]
+workspace = true
