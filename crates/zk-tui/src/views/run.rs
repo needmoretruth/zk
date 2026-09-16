@@ -148,7 +148,8 @@ fn circuit(doc: &mut Doc, report: &RunReport, language: Language) {
 
 /// A circuit count's name; keys no table knows are shown as words.
 fn count_name(key: &str, language: Language) -> String {
-    let msg = match key {
+    // Exhibits name counts with hyphens or spaces; both spellings mean the same count.
+    let msg = match key.replace(' ', "-").as_str() {
         "constraints" => R::CountConstraints,
         "variables" => R::CountVariables,
         "public-inputs" => R::CountPublicInputs,
@@ -157,6 +158,33 @@ fn count_name(key: &str, language: Language) -> String {
         "columns" => R::CountColumns,
         "gates" => R::CountGates,
         "multiplications" => R::CountMultiplications,
+        "padded-constraints" => R::CountPaddedConstraints,
+        "padded-variables" => R::CountPaddedVariables,
+        "padded-witness-variables" => R::CountPaddedWitnessVariables,
+        "domain-size" => R::CountDomainSize,
+        "copy-constraints" => R::CountCopyConstraints,
+        "assertions" => R::CountAssertions,
+        "witness-values" => R::CountWitnessValues,
+        "wrapper-constraints" => R::CountWrapperConstraints,
+        "witness-words" => R::CountWitnessWords,
+        "public-words" => R::CountPublicWords,
+        "universal-srs-bytes" => R::CountUniversalSrsBytes,
+        "trace-rows" => R::CountTraceRows,
+        "steps" => R::CountSteps,
+        "augmented-constraints" => R::CountAugmentedConstraints,
+        "secondary-constraints" => R::CountSecondaryConstraints,
+        "range-lookups" => R::CountRangeLookups,
+        "range-checks" => R::CountRangeChecks,
+        "linear-constraints" => R::CountLinearConstraints,
+        "quadratic-constraints" => R::CountQuadraticConstraints,
+        "program-operations" => R::CountProgramOperations,
+        "opened-columns" => R::CountOpenedColumns,
+        "multipliers" => R::CountMultipliers,
+        "message-length" => R::CountMessageLength,
+        "layers" => R::CountLayers,
+        "k" => R::CountK,
+        "generators" => R::CountGenerators,
+        "commitments" => R::CountCommitments,
         other => return humanise(other),
     };
     msg.text(language).to_string()

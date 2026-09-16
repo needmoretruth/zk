@@ -165,8 +165,8 @@ fn unknown_input_and_language_switches_answer_in_cells() {
     assert_eq!(app.language(), Language::KOREAN);
     let shown = screen(&draw(&mut app, 120, 40));
     assert!(shown.contains("✗ Unknown command /nope. Type /help for the list."), "{shown}");
-    assert!(shown.contains("• Language: 한국어"), "{shown}");
-    assert!(shown.contains("No proof systems are built into this binary yet."), "{shown}");
+    assert!(shown.contains("• 언어: 한국어"), "{shown}");
+    assert!(shown.contains("이 실행 파일에는 아직 증명 시스템이 들어 있지 않습니다."), "{shown}");
     enter(&mut app, "/clear");
     assert!(!screen(&draw(&mut app, 120, 40)).contains("nmtzk"));
     enter(&mut app, "/quit");

@@ -32,7 +32,9 @@ pub fn welcome(museum: &Museum, language: Language) -> Entry {
     ];
     lines.extend(tries.iter().map(|(command, words)| row(command, words.text(language))));
     lines.push(Vec::new());
-    lines.push(row("/lang ko", U::WelcomeLang.text(language)));
+    // The line offers the other language, so a Korean reader is shown the way back to English.
+    let other = if language == Language::KOREAN { "/lang en" } else { "/lang ko" };
+    lines.push(row(other, U::WelcomeLang.text(language)));
     if museum.systems.is_empty() {
         lines.push(Vec::new());
         lines.push(super::caution(C::NoSystems.text(language)));
