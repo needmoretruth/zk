@@ -1,0 +1,39 @@
+# Every push and every proposal, checked the way it is checked by hand.
+#
+# Linux is the platform the museum is built for; macOS runs the same checks because its readers are
+# told to build from source and deserve to know that it works. The compiler comes from
+# rust-toolchain.toml, so this workflow and a reader's machine use the same one.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: never
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      # With no argument, rustup installs the toolchain rust-toolchain.toml names, with its components.
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
+
+  # Licences, sources, duplicate and wildcard dependencies, and security advisories, against deny.toml.
+  # Separate from the build so a new advisory shows up as its own red mark rather than hiding a
+  # broken test.
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: EmbarkStudios/cargo-deny-action@v2
