@@ -1,0 +1,30 @@
+[package]
+name = "sys-ultraplonk"
+description = "UltraPlonk (TurboPlonk gates plus plookup range tables), run by jellyfish's KZG prover over BN254 on the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+# jellyfish is not published to crates.io. `jf-plonk` is pinned to a commit of the main branch; `test-srs`
+# is jellyfish's switch for generating a universal reference string locally instead of loading one.
+jf-plonk = { git = "https://github.com/EspressoSystems/jellyfish", rev = "b1581c26f7195962d17fc5ff3768ac55db610ca1", features = ["std", "test-srs"] }
+# `jf-plonk` itself names `jf-relation` by this tag, and Cargo treats a tag and a rev as two different
+# sources: pinning a rev here would build a second `PlonkCircuit` type the prover does not accept. The
+# lockfile fixes the tag to commit b33995b68641a2742e4ad2c05ee4e15621ff43b0, whose `relation/` is
+# identical to the pinned main.
+jf-relation = { git = "https://github.com/EspressoSystems/jellyfish", tag = "jf-relation-v0.5.0", features = ["std"] }
+ark-bn254 = { version = "0.5", default-features = false, features = ["curve"] }
+ark-ff = { version = "0.5", default-features = false }
+ark-serialize = { version = "0.5", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
+getrandom = "0.4"
+
+[lints]
+workspace = true

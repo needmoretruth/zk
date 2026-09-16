@@ -41,6 +41,9 @@ allow-git = [
     "https://github.com/zkcrypto/bulletproofs",
     # jellyfish: the TurboPlonk/UltraPlonk exhibit; not published to crates.io (MIT at the root).
     "https://github.com/EspressoSystems/jellyfish",
+    # jellyfish's own dependencies: espresso-systems-common (MIT) and spongefish (Apache-2.0).
+    "https://github.com/espressosystems/espresso-systems-common",
+    "https://github.com/arkworks-rs/spongefish.git",
 ]
 
 [advisories]
