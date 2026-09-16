@@ -25,6 +25,7 @@ sys-circle-stark = { path = "../sys-circle-stark" }
 sys-gm17 = { path = "../sys-gm17" }
 sys-bulletproofs = { path = "../sys-bulletproofs" }
 sys-spartan = { path = "../sys-spartan" }
+sys-marlin = { path = "../sys-marlin" }
 sys-nova = { path = "../sys-nova" }
 zk-cave = { path = "../zk-cave" }
 zk-trio = { path = "../zk-trio" }

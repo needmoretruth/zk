@@ -24,6 +24,7 @@ pub(crate) static SYSTEMS: &[&dyn ProofSystem] = &[
     &sys_gm17::Gm17,
     &sys_bulletproofs::Bulletproofs,
     &sys_spartan::Spartan,
+    &sys_marlin::Marlin,
     &sys_nova::Nova,
     // Homemade
     &zk_cave::Cave,

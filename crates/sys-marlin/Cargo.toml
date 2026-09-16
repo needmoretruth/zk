@@ -1,0 +1,30 @@
+[package]
+name = "sys-marlin"
+description = "Marlin, the preprocessing zkSNARK with a universal and updatable SRS: ark-marlin over BLS12-381, proving the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+ark-marlin = "0.3.0"
+# MarlinKZG10, the polynomial commitment the Marlin paper and ark-marlin's own tests use.
+ark-poly-commit = "0.3.0"
+ark-poly = "0.3.0"
+# The same arkworks 0.3 versions sys-gm17 uses, so both exhibits share one build of the curve.
+ark-relations = "0.3.0"
+ark-ff = "0.3.0"
+ark-serialize = "0.3.0"
+ark-bls12-381 = "0.3.0"
+# ark-marlin's Fiat–Shamir transcript hashes with a `digest` 0.9 hash; its tests use BLAKE2s.
+blake2 = "0.9.2"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+
+[lints]
+workspace = true
