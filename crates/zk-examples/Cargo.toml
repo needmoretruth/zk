@@ -1,0 +1,20 @@
+[package]
+name = "zk-examples"
+description = "The seven statements every proof system in the museum proves, written once over any field."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+zk-circuit = { path = "../zk-circuit" }
+
+[dev-dependencies]
+ark-ff = "0.6"
+ark-bn254 = { version = "0.6", default-features = false, features = ["scalar_field"] }
+p3-field = "0.7"
+p3-baby-bear = "0.7"
+
+[lints]
+workspace = true

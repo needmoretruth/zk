@@ -1,0 +1,20 @@
+[package]
+name = "zk-circuit"
+description = "Field-generic circuits written once and lowered into R1CS, PLONKish rows and a wide AIR."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+sha2 = { version = "0.11", default-features = false }
+
+[dev-dependencies]
+ark-ff = "0.6"
+ark-bn254 = { version = "0.6", default-features = false, features = ["scalar_field"] }
+p3-field = "0.7"
+p3-baby-bear = "0.7"
+
+[lints]
+workspace = true
