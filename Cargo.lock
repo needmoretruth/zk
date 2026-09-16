@@ -5929,6 +5929,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sys-zkboo"
+version = "0.0.0"
+dependencies = [
+ "getrandom 0.4.3",
+ "p3-field 0.7.0",
+ "p3-goldilocks",
+ "sha2 0.11.0",
+ "zk-circuit",
+ "zk-core",
+ "zk-examples",
+]
+
+[[package]]
 name = "tagged-base64"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6915,6 +6928,7 @@ dependencies = [
  "sys-stark",
  "sys-ultraplonk",
  "sys-winterfell",
+ "sys-zkboo",
  "zk-cave",
  "zk-core",
  "zk-i18n",
