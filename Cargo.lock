@@ -4112,6 +4112,7 @@ name = "nmtzk"
 version = "0.0.0"
 dependencies = [
  "clap",
+ "rustix",
  "serde",
  "serde_json",
  "zk-core",
@@ -6527,6 +6528,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sys-ligero"
+version = "0.0.0"
+dependencies = [
+ "getrandom 0.4.3",
+ "p3-dft 0.7.0",
+ "p3-field 0.7.0",
+ "p3-goldilocks",
+ "p3-matrix 0.7.0",
+ "sha2 0.11.0",
+ "zk-circuit",
+ "zk-core",
+]
+
+[[package]]
 name = "sys-marlin"
 version = "0.0.0"
 dependencies = [
@@ -7730,6 +7745,7 @@ dependencies = [
  "sys-gm17",
  "sys-groth16",
  "sys-halo2",
+ "sys-ligero",
  "sys-marlin",
  "sys-miden",
  "sys-nova",
