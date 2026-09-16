@@ -1,0 +1,19 @@
+[package]
+name = "sys-halo2"
+description = "Halo 2 as Zcash Orchard runs it: halo2_proofs over the Pasta curves with an inner-product commitment, proving the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+halo2_proofs = "0.3.5"
+ff = "0.13.1"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+
+[lints]
+workspace = true

@@ -41,7 +41,9 @@ fn expected_first_violation(example: ExampleId) -> &'static str {
         ExampleId::Age => "year - birth_year - threshold fits in 8 bits",
         ExampleId::Membership => "member leaf is under the root",
         ExampleId::Factoring => "p - 2 fits in 15 bits",
-        ExampleId::PoolSpend => "value in equals value out",
+        ExampleId::PoolSpend
+        | ExampleId::PoolSpendWithoutRangeChecks
+        | ExampleId::PoolSpendWithoutNullifierBinding => "value in equals value out",
     }
 }
 

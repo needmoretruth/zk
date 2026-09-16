@@ -37,6 +37,12 @@ pub enum ExampleId {
     Factoring,
     /// `pool-spend`: a Toy Shielded Pool spend.
     PoolSpend,
+    /// `pool-spend-no-range-checks`: the spend circuit without range checks. Not one of the seven:
+    /// it exists so the pool can show a counterfeit being accepted by a broken circuit.
+    PoolSpendWithoutRangeChecks,
+    /// `pool-spend-unbound-nullifier`: the spend circuit without the nullifier binding. Not one of
+    /// the seven: it exists so the pool can show a double spend being accepted by a broken circuit.
+    PoolSpendWithoutNullifierBinding,
 }
 
 impl ExampleId {
@@ -51,6 +57,11 @@ impl ExampleId {
         Self::PoolSpend,
     ];
 
+    /// The two deliberately broken spend circuits, kept out of [`ExampleId::ALL`] so no comparison
+    /// or command list ever offers them as statements.
+    pub const BROKEN: [ExampleId; 2] =
+        [Self::PoolSpendWithoutRangeChecks, Self::PoolSpendWithoutNullifierBinding];
+
     /// The permanent string ID.
     pub fn id(self) -> &'static str {
         match self {
@@ -61,10 +72,12 @@ impl ExampleId {
             Self::Membership => membership::ID,
             Self::Factoring => factoring::ID,
             Self::PoolSpend => pool::spend::ID,
+            Self::PoolSpendWithoutRangeChecks => "pool-spend-no-range-checks",
+            Self::PoolSpendWithoutNullifierBinding => "pool-spend-unbound-nullifier",
         }
     }
 
-    /// Looks an example up by its string ID.
+    /// Looks one of the seven examples up by its string ID; the broken circuits are not found here.
     pub fn from_id(id: &str) -> Option<Self> {
         Self::ALL.into_iter().find(|example| example.id() == id)
     }
@@ -78,7 +91,9 @@ impl ExampleId {
             Self::Age => age::public_input_names(),
             Self::Membership => membership::public_input_names(),
             Self::Factoring => factoring::public_input_names(),
-            Self::PoolSpend => pool::spend::public_input_names(),
+            Self::PoolSpend
+            | Self::PoolSpendWithoutRangeChecks
+            | Self::PoolSpendWithoutNullifierBinding => pool::spend::public_input_names(),
         }
     }
 
@@ -91,7 +106,9 @@ impl ExampleId {
             Self::Age => age::private_input_names(),
             Self::Membership => membership::private_input_names(),
             Self::Factoring => factoring::private_input_names(),
-            Self::PoolSpend => pool::spend::private_input_names(),
+            Self::PoolSpend
+            | Self::PoolSpendWithoutRangeChecks
+            | Self::PoolSpendWithoutNullifierBinding => pool::spend::private_input_names(),
         }
     }
 
@@ -105,6 +122,14 @@ impl ExampleId {
             Self::Membership => membership::circuit(),
             Self::Factoring => factoring::circuit(),
             Self::PoolSpend => pool::spend::circuit(),
+            Self::PoolSpendWithoutRangeChecks => pool::spend::circuit_variant(
+                pool::spend::RangeChecks::Omitted,
+                pool::spend::NullifierBinding::Enforced,
+            ),
+            Self::PoolSpendWithoutNullifierBinding => pool::spend::circuit_variant(
+                pool::spend::RangeChecks::Enforced,
+                pool::spend::NullifierBinding::Omitted,
+            ),
         }
     }
 
@@ -117,7 +142,9 @@ impl ExampleId {
             Self::Age => age::honest(),
             Self::Membership => membership::honest(),
             Self::Factoring => factoring::honest(),
-            Self::PoolSpend => pool::spend::honest(),
+            Self::PoolSpend
+            | Self::PoolSpendWithoutRangeChecks
+            | Self::PoolSpendWithoutNullifierBinding => pool::spend::honest(),
         }
     }
 
@@ -130,7 +157,9 @@ impl ExampleId {
             Self::Age => age::dishonest(),
             Self::Membership => membership::dishonest(),
             Self::Factoring => factoring::dishonest(),
-            Self::PoolSpend => pool::spend::dishonest(),
+            Self::PoolSpend
+            | Self::PoolSpendWithoutRangeChecks
+            | Self::PoolSpendWithoutNullifierBinding => pool::spend::dishonest(),
         }
     }
 }

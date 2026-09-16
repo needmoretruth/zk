@@ -27,6 +27,20 @@ pub enum RangeChecks {
     Omitted,
 }
 
+/// Whether the circuit ties the published nullifier to the note being spent and the key spending it.
+///
+/// [`NullifierBinding::Omitted`] exists only to demonstrate a double spend: without the binding, the
+/// same note can be spent again under a fresh nullifier, and the ledger's nullifier set never notices.
+/// The Zcash Orchard circuit flaw found on 2026-05-29 belonged to this class (a missing constraint
+/// let one note yield different nullifiers); this is a simplified member of the class, not that flaw.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum NullifierBinding {
+    /// `nullifier = ToyHash(sk, cm_in)` is enforced; the `pool-spend` example.
+    Enforced,
+    /// The nullifier is a free public input; the broken circuit for the attack demonstration.
+    Omitted,
+}
+
 const PUBLIC: [&str; 6] = ["root", "nullifier", "cm_out_1", "cm_out_2", "v_pub_in", "v_pub_out"];
 
 /// `root`, `nullifier`, `cm_out_1`, `cm_out_2`, `v_pub_in`, `v_pub_out`.
@@ -98,6 +112,14 @@ impl Inputs {
 
 /// The spend circuit, optionally without range checks (see [`RangeChecks`]).
 pub fn circuit_with<F: ZkField>(range_checks: RangeChecks) -> Result<Circuit<F>, CircuitError> {
+    circuit_variant(range_checks, NullifierBinding::Enforced)
+}
+
+/// The spend circuit with each safety check chosen; only the attack demonstrations omit any.
+pub fn circuit_variant<F: ZkField>(
+    range_checks: RangeChecks,
+    nullifier_binding: NullifierBinding,
+) -> Result<Circuit<F>, CircuitError> {
     let mut builder = CircuitBuilder::<F>::new()?;
     let inputs = Inputs::declare(&mut builder);
     let zero = builder.constant(F::zero());
@@ -110,11 +132,13 @@ pub fn circuit_with<F: ZkField>(range_checks: RangeChecks) -> Result<Circuit<F>,
     // shield public value without owning a note.
     let gap = builder.mul(LinearCombination::<F>::from(computed_root) - inputs.root, inputs.v_in);
     builder.assert_zero(gap, "input note is in the tree unless its value is zero");
-    let nf = toyhash_gadget(&mut builder, inputs.sk, cm_in);
-    builder.assert_zero(
-        LinearCombination::<F>::from(nf) - inputs.nullifier,
-        "nullifier belongs to the input note and key",
-    );
+    if nullifier_binding == NullifierBinding::Enforced {
+        let nf = toyhash_gadget(&mut builder, inputs.sk, cm_in);
+        builder.assert_zero(
+            LinearCombination::<F>::from(nf) - inputs.nullifier,
+            "nullifier belongs to the input note and key",
+        );
+    }
     for (index, ((pk, value, rcm), cm_out)) in inputs.outputs.iter().zip(inputs.cm_out).enumerate()
     {
         let cm = commitment_gadget(&mut builder, *pk, *value, *rcm);

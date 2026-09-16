@@ -254,6 +254,18 @@ pub trait Prepared: Send {
         control: &Control,
     ) -> Result<Verdict, SystemError>;
 
+    /// Proves an assignment given directly, for activities (the Toy Shielded Pool) that prove their own
+    /// notes rather than a sample claim. Inputs are canonical field bytes in declaration order. Like
+    /// [`Prepared::prove`], it must not pre-check the witness. Systems that do not offer it say so.
+    fn prove_assignment(
+        &mut self,
+        _public: &[FieldBytes],
+        _private: &[FieldBytes],
+        _control: &Control,
+    ) -> Result<Proven, SystemError> {
+        Err(SystemError::NotApplicable("this system cannot prove a caller-supplied assignment yet"))
+    }
+
     /// For interactive systems: plays the whole conversation. `public` replaces the instance's own
     /// public inputs when given, which is how the harness asks a verifier to check a different claim.
     fn interact(

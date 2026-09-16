@@ -1,5 +1,6 @@
 use zk_circuit::gadgets::merkle_root_native;
 use zk_circuit::{EvalError, ZkField};
+use zk_examples::ExampleId;
 use zk_examples::merkle_tree::MerkleTree;
 use zk_examples::pool::spend::{RangeChecks, circuit, circuit_with, sample_spend};
 
@@ -36,4 +37,21 @@ fn every_tree_path_leads_to_the_root_and_a_full_tree_refuses_more_leaves() {
         tree.push(F::one());
     }
     assert_eq!(tree.push(F::one()), None);
+}
+
+#[test]
+fn a_spend_with_a_forged_nullifier_passes_only_the_circuit_without_the_binding() {
+    let mut forged = ExampleId::PoolSpend.honest::<F>();
+    forged.public[1] = forged.public[1].add(F::one());
+    assert!(ExampleId::PoolSpend.circuit::<F>().unwrap().evaluate(&forged).is_err());
+    let broken = ExampleId::PoolSpendWithoutNullifierBinding.circuit::<F>().unwrap();
+    assert!(broken.evaluate(&forged).is_ok());
+}
+
+#[test]
+fn the_broken_circuits_are_never_offered_as_examples() {
+    for broken in ExampleId::BROKEN {
+        assert!(!ExampleId::ALL.contains(&broken));
+        assert_eq!(ExampleId::from_id(broken.id()), None);
+    }
 }
