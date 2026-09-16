@@ -1,0 +1,20 @@
+[package]
+name = "sys-plonk"
+description = "PLONK (2019), run by lambdaworks' KZG prover over BLS12-381 on the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+# lambdaworks' PLONK prover is not published to crates.io; all three crates come from one pinned commit.
+# `parallel` is lambdaworks' own switch for multi-threaded FFTs, commitments and prover rounds.
+lambdaworks-plonk = { git = "https://github.com/lambdaclass/lambdaworks", rev = "3a87850dc405e12ab6c4bbaeba68d52815ab1158", features = ["parallel"] }
+lambdaworks-math = { git = "https://github.com/lambdaclass/lambdaworks", rev = "3a87850dc405e12ab6c4bbaeba68d52815ab1158", default-features = false, features = ["std"] }
+lambdaworks-crypto = { git = "https://github.com/lambdaclass/lambdaworks", rev = "3a87850dc405e12ab6c4bbaeba68d52815ab1158", default-features = false, features = ["std"] }
+
+[lints]
+workspace = true
