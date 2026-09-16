@@ -1,0 +1,27 @@
+[package]
+name = "sys-winterfell"
+description = "Winterfell's STARK prover, which is not zero-knowledge, proving the museum's seven statements and leaking their secrets."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+winter-air = "0.13.1"
+winter-crypto = "0.13.1"
+winter-math = "0.13.1"
+winter-prover = "0.13.1"
+winter-verifier = "0.13.1"
+winter-utils = "0.13.1"
+# Not used directly. winter-crypto's Blake3 comes from this crate, whose build script otherwise
+# assembles SIMD code with the system C compiler; `pure` keeps it to Rust alone.
+blake3 = { version = "1.8", default-features = false, features = ["pure"] }
+
+[lints]
+workspace = true

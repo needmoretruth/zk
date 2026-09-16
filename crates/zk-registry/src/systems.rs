@@ -17,12 +17,14 @@ pub(crate) static SYSTEMS: &[&dyn ProofSystem] = &[
     &sys_plonk::Plonk,
     &sys_ultraplonk::UltraPlonk,
     // Polygon
+    &sys_winterfell::Winterfell,
     &sys_plonky3::Plonky3,
     &sys_circle_stark::CircleStark,
     // Others
     &sys_gm17::Gm17,
     &sys_bulletproofs::Bulletproofs,
     &sys_spartan::Spartan,
+    &sys_nova::Nova,
     // Homemade
     &zk_cave::Cave,
     &zk_trio::Trio,

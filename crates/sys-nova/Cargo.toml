@@ -1,0 +1,25 @@
+[package]
+name = "sys-nova"
+description = "Nova, folding-based incrementally verifiable computation compressed into a zero-knowledge SNARK, run by Microsoft's nova-snark over the Pasta cycle on the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+# The upstream prover and verifier; it pins `serde_with =3.21.0`, which Cargo resolves alongside.
+nova-snark = "0.76.0"
+# The field traits halo2curves implements for the Pasta scalars nova-snark re-exports.
+ff = "0.13.1"
+# nova-snark's examples write a `CompressedSNARK` with bincode 2's serde support and legacy config.
+bincode = { version = "2.0.1", features = ["serde"] }
+serde = "1.0.229"
+
+[lints]
+workspace = true
