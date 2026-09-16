@@ -1,6 +1,7 @@
 //! A pool directory of its own for each test, removed afterwards.
 
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use zk_pool::Receipt;
@@ -9,8 +10,12 @@ pub struct ScratchDir(PathBuf);
 
 impl ScratchDir {
     pub fn new(label: &str) -> Self {
+        // Tests run in parallel threads of one process and can read the same clock value, so a
+        // counter keeps two directories from ever sharing a name and deleting each other's files.
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        let unique = NEXT.fetch_add(1, Ordering::Relaxed);
         let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-        let name = format!("zk-pool-{label}-{}-{nanos}", std::process::id());
+        let name = format!("zk-pool-{label}-{}-{nanos}-{unique}", std::process::id());
         Self(std::env::temp_dir().join(name))
     }
 
