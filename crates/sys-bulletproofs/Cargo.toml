@@ -1,0 +1,26 @@
+[package]
+name = "sys-bulletproofs"
+description = "Bulletproofs over ristretto255, run by the zkcrypto R1CS prover on the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+# The R1CS prover sits behind `yoloproofs`, which the crates.io release does not enable, so the crate
+# comes from one pinned commit of the repository's default branch.
+bulletproofs = { git = "https://github.com/zkcrypto/bulletproofs", rev = "04bce4e66013ff857ed462fd4206210544101461", features = ["yoloproofs"] }
+curve25519-dalek = "4.1.3"
+merlin = "3.0.0"
+# Not used directly. bulletproofs zeroes its secrets with clear_on_drop, whose build script compiles a
+# C file unless `no_cc` is on; naming it here turns the feature on for the whole graph, and the crate
+# falls back to its pure-Rust way of hiding the zeroing from the optimizer.
+clear_on_drop = { version = "0.2.5", features = ["no_cc"] }
+
+[lints]
+workspace = true
