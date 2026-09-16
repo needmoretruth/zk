@@ -20,6 +20,8 @@ allow = [
     "Unicode-3.0",
     # foldhash, pulled in by hashbrown; permissive, see the decision log.
     "Zlib",
+    # Apache-2.0 with the LLVM exception, which only adds permissions (Remainder, cranelift crates).
+    "Apache-2.0 WITH LLVM-exception",
 ]
 confidence-threshold = 0.9
 
@@ -44,6 +46,13 @@ allow-git = [
     # jellyfish's own dependencies: espresso-systems-common (MIT) and spongefish (Apache-2.0).
     "https://github.com/espressosystems/espresso-systems-common",
     "https://github.com/arkworks-rs/spongefish.git",
+    # Remainder: the GKR exhibit, GKR with Hyrax commitments; not published to crates.io (MIT, or
+    # Apache-2.0 with the LLVM exception, at the root).
+    "https://github.com/worldcoin/Remainder_CE",
+    # Remainder's own dependencies, pinned by tag in its manifests (MIT OR Apache-2.0 each).
+    "https://github.com/privacy-scaling-explorations/halo2curves",
+    "https://github.com/privacy-scaling-explorations/halo2",
+    "https://github.com/privacy-scaling-explorations/poseidon",
 ]
 
 [advisories]
@@ -69,4 +78,31 @@ ignore = [
 [[licenses.clarify]]
 crate = "lambdaworks-plonk"
 expression = "Apache-2.0"
+license-files = []
+
+# Remainder's crates carry no license field; the repository is MIT, or Apache-2.0 with the LLVM exception
+# (LICENSE-MIT and LICENSE-APACHE at its root, and its README).
+[[licenses.clarify]]
+crate = "remainder"
+expression = "MIT OR Apache-2.0 WITH LLVM-exception"
+license-files = []
+
+[[licenses.clarify]]
+crate = "frontend"
+expression = "MIT OR Apache-2.0 WITH LLVM-exception"
+license-files = []
+
+[[licenses.clarify]]
+crate = "hyrax"
+expression = "MIT OR Apache-2.0 WITH LLVM-exception"
+license-files = []
+
+[[licenses.clarify]]
+crate = "ligero"
+expression = "MIT OR Apache-2.0 WITH LLVM-exception"
+license-files = []
+
+[[licenses.clarify]]
+crate = "shared-types"
+expression = "MIT OR Apache-2.0 WITH LLVM-exception"
 license-files = []
