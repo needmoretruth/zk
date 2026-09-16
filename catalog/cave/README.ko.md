@@ -22,7 +22,7 @@
 
 ## 역사
 
-이 이야기는 Jean-Jacques Quisquater와 Louis Guillou가 가족과 함께, 영어판은 Tom Berson과 함께 쓴
+이 이야기는 Jean-Jacques Quisquater와 Louis Guillou가 가족과 함께, 영어 버전은 Tom Berson과 함께 쓴
 「How to Explain Zero-Knowledge Protocols to Your Children」이고 CRYPTO '89에 실렸습니다. 짧게 다시 쓰면:
 
 - **도둑들.** 옛 바그다드에서 도둑이 알리바바의 지갑을 낚아채 갈라진 동굴로 달아납니다. 알리바바는 두 길을 다 뒤지지만 아무도 없습니다.
