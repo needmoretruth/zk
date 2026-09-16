@@ -7,6 +7,7 @@
 
 pub mod age;
 pub mod factoring;
+mod instance;
 pub mod membership;
 pub mod merkle_tree;
 pub mod one_plus_one;
@@ -14,6 +15,7 @@ pub mod password;
 pub mod pool;
 pub mod sudoku;
 
+pub use instance::{InstanceKind, derive_u64};
 use zk_circuit::{Assignment, Circuit, CircuitError, ZkField};
 
 /// One of the seven statements.

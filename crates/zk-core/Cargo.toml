@@ -1,6 +1,6 @@
 [package]
-name = "zk-examples"
-description = "The seven statements every proof system in the museum proves, written once over any field."
+name = "zk-core"
+description = "What every proof system in the museum declares about itself, and the one harness that runs and attacks them all alike."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,9 +9,13 @@ repository.workspace = true
 
 [dependencies]
 zk-circuit = { path = "../zk-circuit" }
-sha2 = { version = "0.11", default-features = false }
+zk-examples = { path = "../zk-examples" }
+serde = { version = "1.0.229", features = ["derive"] }
+getrandom = "0.4"
 
 [dev-dependencies]
+serde_json = "1.0.151"
+sha2 = "0.11"
 ark-ff = "0.6"
 ark-bn254 = { version = "0.6", default-features = false, features = ["scalar_field"] }
 p3-field = "0.7"

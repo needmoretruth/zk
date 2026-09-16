@@ -37,17 +37,19 @@ pub fn circuit<F: ZkField>() -> Result<Circuit<F>, CircuitError> {
     builder.finish()
 }
 
-fn sealed<F: ZkField>(answer: u64) -> Assignment<F> {
-    let [answer, salt] = [answer, SALT].map(F::from_u64);
+/// `answer` sealed with `salt`; the salt is what keeps a guessable answer out of reach of anyone who
+/// hashes candidates, so a run draws a fresh one ([`crate::ExampleId::instance`]).
+pub fn sealed<F: ZkField>(answer: u64, salt: u64) -> Assignment<F> {
+    let [answer, salt] = [answer, salt].map(F::from_u64);
     Assignment { public: vec![toyhash(answer, salt)], private: vec![answer, salt] }
 }
 
 /// Answer 2 in its envelope.
 pub fn honest<F: ZkField>() -> Assignment<F> {
-    sealed(2)
+    sealed(2, SALT)
 }
 
 /// Answer 3, sealed in its own envelope: the envelope is consistent, the arithmetic is not.
 pub fn dishonest<F: ZkField>() -> Assignment<F> {
-    sealed(3)
+    sealed(3, SALT)
 }

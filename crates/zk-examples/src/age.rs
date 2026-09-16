@@ -19,8 +19,10 @@ pub const MARGIN_BITS: u32 = 8;
 const YEAR: u64 = 2026;
 const THRESHOLD: u64 = 18;
 const SALT: u64 = 271_828;
-const ADULT_BIRTH_YEAR: u64 = 1990;
-const SEVENTEEN_YEAR_OLD_BIRTH_YEAR: u64 = 2009;
+/// Birth year of the honest holder: 36 in 2026.
+pub const ADULT_BIRTH_YEAR: u64 = 1990;
+/// Birth year of the dishonest holder: 17 in 2026.
+pub const SEVENTEEN_YEAR_OLD_BIRTH_YEAR: u64 = 2009;
 
 /// `year`, `threshold`, `credential`.
 pub fn public_input_names() -> Vec<String> {
@@ -54,8 +56,9 @@ pub fn circuit<F: ZkField>() -> Result<Circuit<F>, CircuitError> {
     builder.finish()
 }
 
-fn born_in<F: ZkField>(birth_year: u64) -> Assignment<F> {
-    let [year, threshold, birth_year, salt] = [YEAR, THRESHOLD, birth_year, SALT].map(F::from_u64);
+/// A holder born in `birth_year` whose credential was sealed with `salt`.
+pub fn born_in<F: ZkField>(birth_year: u64, salt: u64) -> Assignment<F> {
+    let [year, threshold, birth_year, salt] = [YEAR, THRESHOLD, birth_year, salt].map(F::from_u64);
     Assignment {
         public: vec![year, threshold, toyhash(birth_year, salt)],
         private: vec![birth_year, salt],
@@ -64,10 +67,10 @@ fn born_in<F: ZkField>(birth_year: u64) -> Assignment<F> {
 
 /// Born in 1990: 36 in 2026.
 pub fn honest<F: ZkField>() -> Assignment<F> {
-    born_in(ADULT_BIRTH_YEAR)
+    born_in(ADULT_BIRTH_YEAR, SALT)
 }
 
 /// Born in 2009 with a genuine credential: 17 in 2026.
 pub fn dishonest<F: ZkField>() -> Assignment<F> {
-    born_in(SEVENTEEN_YEAR_OLD_BIRTH_YEAR)
+    born_in(SEVENTEEN_YEAR_OLD_BIRTH_YEAR, SALT)
 }

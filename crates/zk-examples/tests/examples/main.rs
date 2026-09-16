@@ -5,5 +5,6 @@
 
 #[path = "../../../zk-circuit/tests/circuit/fields.rs"]
 mod fields;
+mod instances;
 mod pool;
 mod statements;
