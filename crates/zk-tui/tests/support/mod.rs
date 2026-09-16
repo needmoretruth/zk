@@ -21,7 +21,8 @@ use zk_core::{
     Proven, ShapeForm, SystemError, Verdict,
 };
 use zk_i18n::Language;
-use zk_tui::{App, Look, Museum, Settings};
+use zk_tui::activities::Pace;
+use zk_tui::{App, Museum, Settings};
 
 const PUBLIC: [u8; 4] = [9, 0, 0, 0];
 // Three significant bytes: the scan skips values below 2^16, which turn up in proofs by chance.
@@ -155,7 +156,38 @@ impl Prepared for Toy {
 }
 
 pub fn app(museum: Museum) -> App {
-    App::new(museum, Settings { language: Language::ENGLISH, look: Look::default() })
+    App::new(museum, Settings { language: Language::ENGLISH, ..Settings::default() })
+}
+
+/// An app whose activities send every beat at once, keeping the pool in `data_dir`.
+pub fn instant_app(museum: Museum, data_dir: Option<std::path::PathBuf>) -> App {
+    let settings = Settings {
+        language: Language::ENGLISH,
+        data_dir,
+        pace: Pace::Instant,
+        ..Settings::default()
+    };
+    App::new(museum, settings)
+}
+
+/// A directory of its own for one test's pool, removed afterwards: a process-wide counter and the
+/// process ID keep tests running in parallel apart.
+pub struct ScratchDir(pub std::path::PathBuf);
+
+impl ScratchDir {
+    pub fn new(label: &str) -> ScratchDir {
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let unique = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let name = format!("nmtzk-tui-{label}-{}-{unique}", std::process::id());
+        ScratchDir(std::env::temp_dir().join(name))
+    }
+}
+
+impl Drop for ScratchDir {
+    fn drop(&mut self) {
+        // Leftovers in the temporary directory are harmless if removal fails.
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
 }
 
 pub fn draw(app: &mut App, width: u16, height: u16) -> Buffer {

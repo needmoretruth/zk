@@ -1,5 +1,7 @@
 //! The command line: global flags and the subcommands that print and exit.
 
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 use zk_core::ExampleId;
 use zk_core::catalog::Shelf;
@@ -17,9 +19,14 @@ pub(crate) struct Cli {
     #[arg(long, global = true)]
     pub(crate) ascii: bool,
 
-    /// Print JSON lines (run reports, system metadata) instead of text.
+    /// Print JSON lines (run reports, system metadata, activity records) instead of text.
     #[arg(long, global = true)]
     pub(crate) json: bool,
+
+    /// Where the Toy Shielded Pool keeps its ledgers and wallets. Default: $XDG_DATA_HOME/nmtzk or
+    /// ~/.local/share/nmtzk, and ~/Library/Application Support/nmtzk on macOS.
+    #[arg(long, global = true, value_name = "DIR")]
+    pub(crate) data_dir: Option<PathBuf>,
 
     #[command(subcommand)]
     pub(crate) command: Option<Command>,
@@ -54,6 +61,93 @@ pub(crate) enum Command {
         #[arg(long)]
         no_attacks: bool,
     },
+    /// Film Ali Baba's cave scene by scene: [MODE] [EXAMPLE].
+    ///
+    /// MODE is demonstration (the default), impostor, jealous-edit, court, prior-agreement or
+    /// apartment; EXAMPLE is an example ID, one-plus-one by default.
+    Cave {
+        /// Mode, then example.
+        #[arg(value_name = "WORDS")]
+        words: Vec<String>,
+        /// Scenes to film, 1 to 1000 (40 by default); floors in the apartment building.
+        #[arg(long, value_name = "N")]
+        scenes: Option<String>,
+    },
+    /// Play Trio's rounds: [play | cheat KIND | simulate] [EXAMPLE].
+    ///
+    /// KIND is bad-card, bad-computation or rewrite-hidden; EXAMPLE is one-plus-one by default.
+    Trio {
+        /// Mode (with the cheat's kind), then example.
+        #[arg(value_name = "WORDS")]
+        words: Vec<String>,
+        /// Rounds the verifier plans, 1 to 1000 (55 by default).
+        #[arg(long, value_name = "N")]
+        rounds: Option<String>,
+    },
+    /// Use the Toy Shielded Pool: ACTION [ARGUMENTS].
+    ///
+    /// use <groth16|halo2> · wallet new <name> · wallet <name> · wallets · faucet <name> <amount> ·
+    /// shield <name> <amount> · send <from> <to> <amount> · unshield <name> <amount> · ledger ·
+    /// attack <double-spend|steal|counterfeit|unbound-nullifier> · reset [--yes]. Without an
+    /// action, lists them.
+    Pool {
+        /// The action and its arguments.
+        #[arg(value_name = "WORDS")]
+        words: Vec<String>,
+        /// Reset without asking first.
+        #[arg(long)]
+        yes: bool,
+    },
+    /// Run a trusted-setup ceremony: [toxic | tau | collude], tau by default.
+    Ceremony {
+        /// The part to run.
+        #[arg(value_name = "PART")]
+        words: Vec<String>,
+        /// Participants taking turns, 1 to 100 (5 by default).
+        #[arg(long, value_name = "N")]
+        participants: Option<String>,
+    },
+    /// Replay a known forgery: bctv14 (CVE-2019-7167).
+    Forge {
+        /// What to forge.
+        #[arg(value_name = "TARGET")]
+        words: Vec<String>,
+    },
+}
+
+impl Command {
+    /// For an activity: its name and its words with flags written back the way the screen takes
+    /// them, so both parse with one grammar. `None` for the other commands.
+    pub(crate) fn activity(&self) -> Option<(&'static str, Vec<String>)> {
+        let with = |words: &[String], flag: &str, value: &Option<String>| {
+            let mut all = words.to_vec();
+            if let Some(value) = value {
+                all.extend([flag.to_string(), value.clone()]);
+            }
+            all
+        };
+        Some(match self {
+            Command::Cave { words, scenes } => ("cave", with(words, "--scenes", scenes)),
+            Command::Trio { words, rounds } => ("trio", with(words, "--rounds", rounds)),
+            Command::Pool { words, yes } => {
+                let mut all = words.clone();
+                if *yes {
+                    all.push("--yes".to_string());
+                }
+                ("pool", all)
+            }
+            Command::Ceremony { words, participants } => {
+                ("ceremony", with(words, "--participants", participants))
+            }
+            Command::Forge { words } => ("forge", words.clone()),
+            Command::List { .. }
+            | Command::About { .. }
+            | Command::Examples
+            | Command::Run { .. } => {
+                return None;
+            }
+        })
+    }
 }
 
 fn parse_language(code: &str) -> Result<Language, String> {

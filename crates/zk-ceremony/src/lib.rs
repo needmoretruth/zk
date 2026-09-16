@@ -26,3 +26,10 @@ mod pairing;
 mod synthesis;
 pub mod tau;
 pub mod toxic;
+
+/// The scalar field every secret, polynomial coefficient and opening in this crate lives in, so a
+/// caller can build them without depending on the curve crate itself.
+pub use bls12_381::Scalar;
+/// The operating system's random source the ceremony's turns take, re-exported so a caller can
+/// pass `&mut OsRng` without depending on `rand_core` itself.
+pub use rand_core::OsRng;

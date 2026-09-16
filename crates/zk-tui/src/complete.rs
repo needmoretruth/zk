@@ -4,6 +4,10 @@ use zk_core::ExampleId;
 use zk_core::catalog::Shelf;
 use zk_i18n::Language;
 
+use crate::activities::cave::CaveMode;
+use crate::activities::ceremony::CeremonyPart;
+use crate::activities::pool::{PoolSystem, attack_key};
+use crate::activities::trio::TrioCheat;
 use crate::commands::{Arg, SPECS};
 use crate::museum::Museum;
 use crate::phrases::ui::Msg;
@@ -40,7 +44,7 @@ pub(crate) fn candidates(input: &str, museum: &Museum, language: Language) -> Ve
     let Some((arg, _)) = spec.args.get(done) else { return Vec::new() };
     let prefix = words[..=done].join(" ");
     let more = done + 1 < spec.args.len();
-    let mut ranked: Vec<(u8, Candidate)> = options(*arg, museum, language)
+    let mut ranked: Vec<(u8, Candidate)> = options(*arg, &words[1..=done], museum, language)
         .into_iter()
         .filter_map(|(value, detail)| {
             let rank = rank(partial, &value)?;
@@ -67,8 +71,13 @@ fn commands(typed: &str, language: Language) -> Vec<Candidate> {
     ranked.into_iter().map(|(_, candidate)| candidate).collect()
 }
 
-/// `(value, description)` pairs an argument position accepts.
-fn options(arg: Arg, museum: &Museum, language: Language) -> Vec<(String, String)> {
+/// `(value, description)` pairs an argument position accepts, given the arguments before it.
+fn options(
+    arg: Arg,
+    before: &[&str],
+    museum: &Museum,
+    language: Language,
+) -> Vec<(String, String)> {
     let systems = || {
         museum.systems.iter().map(|system| {
             let meta = system.meta();
@@ -101,7 +110,74 @@ fn options(arg: Arg, museum: &Museum, language: Language) -> Vec<(String, String
             .iter()
             .map(|language| (language.code().to_string(), language.endonym().to_string()))
             .collect(),
+        other => activity_options(other, before, language),
     }
+}
+
+fn pairs(items: impl IntoIterator<Item = (&'static str, &'static str)>) -> Vec<(String, String)> {
+    items.into_iter().map(|(value, detail)| (value.to_string(), detail.to_string())).collect()
+}
+
+/// Completions for the hands-on commands' arguments.
+fn activity_options(arg: Arg, before: &[&str], language: Language) -> Vec<(String, String)> {
+    use crate::phrases::{pool, trio};
+    let examples = || options(Arg::Example, &[], &Museum::empty(), language);
+    match (arg, before.first().copied()) {
+        (Arg::CaveMode, _) => pairs(
+            CaveMode::ALL
+                .map(|mode| (mode.key(), crate::views::cave::mode_name(mode).text(language))),
+        ),
+        (Arg::TrioMode, _) => pairs([
+            ("play", trio::Msg::ModePlay.text(language)),
+            ("cheat", Msg::ArgTrioCheat.text(language)),
+            ("simulate", trio::Msg::ModeSimulate.text(language)),
+        ]),
+        (Arg::TrioDetail, Some("cheat")) => pairs(
+            TrioCheat::ALL
+                .map(|cheat| (cheat.key(), crate::views::trio::cheat_name(cheat).text(language))),
+        ),
+        (Arg::TrioDetail, _) => examples(),
+        (Arg::CeremonyPart, _) => pairs(CeremonyPart::ALL.map(|part| {
+            let detail = match part {
+                CeremonyPart::Toxic => Msg::ArgToxic,
+                CeremonyPart::Tau => Msg::ArgTau,
+                CeremonyPart::Collude => Msg::ArgCollude,
+            };
+            (part.key(), detail.text(language))
+        })),
+        (Arg::ForgeTarget, _) => pairs([("bctv14", Msg::ArgBctv14.text(language))]),
+        (Arg::PoolAction, _) => pool_actions(language),
+        (Arg::PoolDetail, Some("use")) => {
+            pairs(PoolSystem::ALL.map(|system| (system.key(), system.name())))
+        }
+        (Arg::PoolDetail, Some("attack")) => pairs(zk_pool::Attack::ALL.map(|attack| {
+            (attack_key(attack), crate::views::pool::attack_name(attack).text(language))
+        })),
+        (Arg::PoolDetail, Some("wallet")) => {
+            pairs([("new", pool::Msg::HelpWalletNew.text(language))])
+        }
+        _ => Vec::new(),
+    }
+}
+
+/// The words after `/pool`, each with what it does.
+fn pool_actions(language: Language) -> Vec<(String, String)> {
+    use crate::phrases::pool::Msg as P;
+    pairs(
+        [
+            ("use", P::HelpUse),
+            ("wallet", P::HelpWallet),
+            ("wallets", P::HelpWallets),
+            ("faucet", P::HelpFaucet),
+            ("shield", P::HelpShield),
+            ("send", P::HelpSend),
+            ("unshield", P::HelpUnshield),
+            ("ledger", P::HelpLedger),
+            ("attack", P::HelpAttack),
+            ("reset", P::HelpReset),
+        ]
+        .map(|(key, msg)| (key, msg.text(language))),
+    )
 }
 
 /// 0 for a prefix match, 1 for a subsequence match, `None` for no match. Case is ignored.

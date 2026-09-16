@@ -39,6 +39,7 @@ pub(crate) enum Event {
     Open(CellRef, Entry),
     Replace(CellRef, Entry),
     Append(CellRef, Doc),
+    Record(serde_json::Value),
     Crashed(String),
     Done,
 }
@@ -95,6 +96,12 @@ impl Outbox {
     /// Adds blocks to the end of a cell: one story beat.
     pub fn append(&self, cell: CellRef, beat: Doc) {
         self.send(Event::Append(cell, beat));
+    }
+
+    /// Hands over one machine-readable record of what just happened, such as one scene of the cave.
+    /// The screen ignores records; `nmtzk --json` prints them as JSON lines.
+    pub fn record(&self, value: serde_json::Value) {
+        self.send(Event::Record(value));
     }
 
     pub(crate) fn crashed(&self, why: String) {

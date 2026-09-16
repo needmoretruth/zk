@@ -127,7 +127,8 @@ impl Job {
     }
 }
 
-fn panic_message(payload: &(dyn Any + Send)) -> String {
+/// The text a panic carried, or `panic` when it carried none.
+pub(crate) fn panic_message(payload: &(dyn Any + Send)) -> String {
     if let Some(text) = payload.downcast_ref::<&str>() {
         return (*text).to_string();
     }

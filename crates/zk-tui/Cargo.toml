@@ -12,6 +12,16 @@ publish = false
 [dependencies]
 zk-core = { path = "../zk-core" }
 zk-i18n = { path = "../zk-i18n" }
+zk-circuit = { path = "../zk-circuit" }
+zk-cave = { path = "../zk-cave" }
+zk-trio = { path = "../zk-trio" }
+zk-pool = { path = "../zk-pool" }
+zk-ceremony = { path = "../zk-ceremony" }
+sys-bctv14 = { path = "../sys-bctv14" }
+sys-groth16 = { path = "../sys-groth16" }
+sys-halo2 = { path = "../sys-halo2" }
+getrandom = "0.4"
+serde_json = "1.0.151"
 ratatui = { version = "0.30.2", default-features = false, features = ["crossterm_0_29"] }
 crossterm = "0.29"
 pulldown-cmark = { version = "0.13.4", default-features = false }

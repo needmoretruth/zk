@@ -1,11 +1,16 @@
 //! What each command says, as documents both the TUI and the plain-text commands draw.
 
 mod catalog;
+pub(crate) mod cave;
+pub(crate) mod ceremony;
 mod compare;
 mod examples;
+pub(crate) mod forge;
 mod help;
+pub(crate) mod pool;
 mod run;
 mod stage;
+pub(crate) mod trio;
 mod welcome;
 
 pub use catalog::{Page, about, list, no_systems, unknown_system};
@@ -31,12 +36,14 @@ pub(crate) fn caution(text: impl Into<String>) -> Vec<Span> {
     vec![span("⚠ ", tone), span(text, tone)]
 }
 
-/// The caution lines a system's metadata calls for: teaching implementation, not zero-knowledge,
-/// trusted component.
+/// The caution lines a system's metadata calls for: teaching or homemade implementation, not
+/// zero-knowledge, trusted component.
 pub(crate) fn cautions(meta: &SystemMeta, language: Language) -> Vec<Vec<Span>> {
     let mut lines = Vec::new();
-    if matches!(meta.implementation, Implementation::Teaching { .. }) {
-        lines.push(caution(C::CautionTeaching.text(language)));
+    match meta.implementation {
+        Implementation::Teaching { .. } => lines.push(caution(C::CautionTeaching.text(language))),
+        Implementation::Homemade => lines.push(caution(C::CautionHomemade.text(language))),
+        Implementation::Upstream { .. } | Implementation::Companion { .. } => {}
     }
     match meta.zero_knowledge {
         ZeroKnowledge::No => lines.push(caution(C::CautionNotZk.text(language))),

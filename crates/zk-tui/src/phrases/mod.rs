@@ -5,7 +5,12 @@
 //! the only place a sentence can change.
 
 pub(crate) mod catalog;
+pub(crate) mod cave;
+pub(crate) mod ceremony;
+pub(crate) mod forge;
+pub(crate) mod pool;
 pub(crate) mod run;
+pub(crate) mod trio;
 pub(crate) mod ui;
 
 /// Replaces `{name}` in `template` with the value given for `name`; unknown names are left as they are.
@@ -70,6 +75,11 @@ mod tests {
         check("ui", ui::Msg::ALL.iter().map(|msg| msg.text(english)).collect());
         check("run", run::Msg::ALL.iter().map(|msg| msg.text(english)).collect());
         check("catalog", catalog::Msg::ALL.iter().map(|msg| msg.text(english)).collect());
+        check("cave", cave::Msg::ALL.iter().map(|msg| msg.text(english)).collect());
+        check("trio", trio::Msg::ALL.iter().map(|msg| msg.text(english)).collect());
+        check("pool", pool::Msg::ALL.iter().map(|msg| msg.text(english)).collect());
+        check("ceremony", ceremony::Msg::ALL.iter().map(|msg| msg.text(english)).collect());
+        check("forge", forge::Msg::ALL.iter().map(|msg| msg.text(english)).collect());
     }
 
     #[test]
@@ -84,6 +94,14 @@ mod tests {
             for msg in catalog::Msg::ALL {
                 assert!(!msg.text(*language).is_empty());
             }
+            let activities = [
+                cave::Msg::ALL.iter().map(|msg| msg.text(*language)).collect::<Vec<_>>(),
+                trio::Msg::ALL.iter().map(|msg| msg.text(*language)).collect(),
+                pool::Msg::ALL.iter().map(|msg| msg.text(*language)).collect(),
+                ceremony::Msg::ALL.iter().map(|msg| msg.text(*language)).collect(),
+                forge::Msg::ALL.iter().map(|msg| msg.text(*language)).collect(),
+            ];
+            assert!(activities.iter().flatten().all(|text| !text.is_empty()));
         }
     }
 

@@ -37,7 +37,10 @@ struct ProverInputs {
 }
 
 /// Draws a fresh CSPRNG seeded from the operating system.
-pub(crate) fn os_rng() -> Result<StdRng, SystemError> {
+///
+/// Public so an activity can drive [`crate::cve_2019_7167`] with the same kind of generator the
+/// exhibit's own setup and prover use.
+pub fn os_rng() -> Result<StdRng, SystemError> {
     let mut seed = [0u8; 32];
     getrandom::fill(&mut seed)
         .map_err(|e| SystemError::Failed(format!("no OS randomness: {e}")))?;

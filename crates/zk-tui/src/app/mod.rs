@@ -7,11 +7,14 @@ mod jobs;
 mod keys;
 mod submit;
 
+use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::time::{Duration, Instant};
 
 use zk_i18n::Language;
 
+use crate::activities::Pace;
+use crate::activities::pool::PoolCache;
 use crate::activity::JobEvent;
 use crate::complete::{self, Candidate};
 use crate::composer::Composer;
@@ -21,7 +24,7 @@ use crate::pager::Pager;
 use crate::transcript::Transcript;
 use crate::views::{self, Page};
 
-pub(crate) use jobs::JOB_THREAD;
+pub(crate) use jobs::{JOB_THREAD, panic_message};
 
 /// Smallest terminal every feature works in.
 pub(crate) const MIN_WIDTH: u16 = 60;
@@ -33,12 +36,16 @@ const QUIT_WINDOW: Duration = Duration::from_secs(2);
 const FLASH_FOR: Duration = Duration::from_secs(2);
 
 /// Start-up choices from the command line.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Settings {
     /// The language the screen starts in; `/lang` changes it.
     pub language: Language,
     /// Colours and glyphs.
     pub look: Look,
+    /// `--data-dir`: where the Toy Shielded Pool is kept; `None` for the platform's data directory.
+    pub data_dir: Option<PathBuf>,
+    /// Whether story beats wait for the reader; tests set [`Pace::Instant`].
+    pub pace: Pace,
 }
 
 #[derive(Debug, Default)]
@@ -53,6 +60,9 @@ pub struct App {
     museum: Museum,
     language: Language,
     look: Look,
+    data_dir: Option<PathBuf>,
+    pace: Pace,
+    pool: PoolCache,
     transcript: Transcript,
     composer: Composer,
     popup: Popup,
@@ -79,6 +89,9 @@ impl App {
             museum,
             language: settings.language,
             look: settings.look,
+            data_dir: settings.data_dir,
+            pace: settings.pace,
+            pool: PoolCache::default(),
             transcript,
             composer: Composer::default(),
             popup: Popup::default(),

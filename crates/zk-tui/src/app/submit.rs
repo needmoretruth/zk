@@ -3,8 +3,13 @@
 use zk_core::{ExampleId, RunOptions};
 
 use super::{App, Popup};
+use crate::activities::cave::CaveRun;
+use crate::activities::ceremony::CeremonyRun;
+use crate::activities::forge::ForgeRun;
+use crate::activities::pool::PoolRun;
+use crate::activities::trio::TrioRun;
 use crate::activity::Activity;
-use crate::commands::{self, Command, ParseError, Target};
+use crate::commands::{self, Command, Target};
 use crate::doc::{Doc, Entry, Kind, Tone, span};
 use crate::phrases::fill;
 use crate::phrases::ui::Msg;
@@ -27,8 +32,8 @@ impl App {
         match commands::parse(line) {
             Ok(command) => self.execute(command),
             Err(error) => {
-                let entry = self.parse_error(error);
-                self.transcript.push(entry);
+                let text = commands::error_text(error, self.language);
+                self.transcript.push(Entry::text(Kind::Error, text));
             }
         }
     }
@@ -49,6 +54,23 @@ impl App {
             }
             Command::Examples => self.transcript.push(views::examples(language)),
             Command::Run { target, example } => self.run(target, example),
+            Command::Cave { mode, example, scenes } => {
+                self.start(Box::new(CaveRun { mode, example, scenes, language, pace: self.pace }));
+            }
+            Command::Trio { mode, example, rounds } => {
+                self.start(Box::new(TrioRun { mode, example, rounds, language, pace: self.pace }));
+            }
+            Command::Pool(action) => {
+                let (data_dir, cache) = (self.data_dir.clone(), self.pool.clone());
+                self.start(Box::new(PoolRun { action, data_dir, cache, language }));
+            }
+            Command::Ceremony { part, participants } => {
+                let pace = self.pace;
+                self.start(Box::new(CeremonyRun { part, participants, language, pace }));
+            }
+            Command::Forge(target) => {
+                self.start(Box::new(ForgeRun { target, language, pace: self.pace }));
+            }
             Command::Lang(chosen) => {
                 self.language = chosen;
                 let text = fill(Msg::LanguageSet.text(chosen), &[("language", chosen.endonym())]);
@@ -79,35 +101,5 @@ impl App {
             },
         };
         self.start(activity);
-    }
-
-    fn parse_error(&self, error: ParseError) -> Entry {
-        let language = self.language;
-        let text = match error {
-            ParseError::Empty | ParseError::NoSlash => Msg::NoSlash.text(language).to_string(),
-            ParseError::Unknown(command) => {
-                fill(Msg::UnknownCommand.text(language), &[("command", &command)])
-            }
-            ParseError::Usage(usage) => fill(Msg::Usage.text(language), &[("usage", usage)]),
-            ParseError::Shelf(shelf) => {
-                let keys: Vec<&str> =
-                    zk_core::catalog::Shelf::ALL.iter().map(|s| s.key()).collect();
-                fill(
-                    Msg::UnknownShelf.text(language),
-                    &[("shelf", &shelf), ("shelves", &keys.join(", "))],
-                )
-            }
-            ParseError::Example(example) => {
-                fill(Msg::UnknownExample.text(language), &[("example", &example)])
-            }
-            ParseError::Language(code) => {
-                let codes: Vec<&str> = zk_i18n::Language::ALL.iter().map(|l| l.code()).collect();
-                fill(
-                    Msg::UnknownLanguage.text(language),
-                    &[("language", &code), ("languages", &codes.join(", "))],
-                )
-            }
-        };
-        Entry::text(Kind::Error, text)
     }
 }

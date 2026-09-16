@@ -77,6 +77,7 @@ zk_i18n::messages! {
     AboutNoPage { en: "No page has been written for {system} yet." },
     AboutNotBuilt { en: "{system} is not built into this binary; showing its page." },
     CautionTeaching { en: "Teaching implementation · not audited" },
+    CautionHomemade { en: "Homemade · not audited" },
     CautionNotZk { en: "Not zero-knowledge as run here: succinct is not the same as zero-knowledge." },
     CautionOptionalZk { en: "Zero knowledge is optional in this system; its page says which setting runs here." },
     CautionTrusted { en: "Trusted component: security rests on a part everyone must trust, not on mathematics." },

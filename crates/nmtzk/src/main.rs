@@ -4,6 +4,7 @@
 //! same cells the full-screen program would show, or JSON lines with `--json`, and exits: non-zero
 //! when an honest proof was rejected, an attack was accepted or a run failed.
 
+mod activity;
 mod cli;
 mod print;
 
@@ -25,11 +26,18 @@ fn main() -> ExitCode {
         language: cli.lang,
         json: cli.json,
         printer: Printer::stdout(look),
+        data_dir: cli.data_dir.clone(),
     };
     match cli.command {
         Some(command) => print::command(command, &context),
         None if std::io::stdin().is_terminal() && std::io::stdout().is_terminal() => {
-            match zk_tui::run(museum, Settings { language: cli.lang, look }) {
+            let settings = Settings {
+                language: cli.lang,
+                look,
+                data_dir: cli.data_dir,
+                pace: zk_tui::activities::Pace::Story,
+            };
+            match zk_tui::run(museum, settings) {
                 Ok(()) => ExitCode::SUCCESS,
                 Err(error) => {
                     eprintln!("nmtzk: {error}");

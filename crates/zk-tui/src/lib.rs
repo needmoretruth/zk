@@ -12,6 +12,7 @@
 //! shielded pool, a trusted-setup ceremony — implement [`Activity`] and are started with
 //! [`App::start`].
 
+pub mod activities;
 pub mod activity;
 mod app;
 mod commands;

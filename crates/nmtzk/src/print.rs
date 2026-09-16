@@ -14,7 +14,7 @@ use zk_tui::views::{self, Comparison};
 use crate::cli::Command;
 
 /// Exit code for a command line that names something this binary does not have.
-const USAGE: u8 = 2;
+pub(crate) const USAGE: u8 = 2;
 
 /// What every subcommand needs.
 pub(crate) struct Context {
@@ -22,6 +22,7 @@ pub(crate) struct Context {
     pub(crate) language: Language,
     pub(crate) json: bool,
     pub(crate) printer: Printer,
+    pub(crate) data_dir: Option<std::path::PathBuf>,
 }
 
 impl Context {
@@ -34,7 +35,7 @@ impl Context {
         ExitCode::from(USAGE)
     }
 
-    fn json_line(&self, value: &impl serde::Serialize) {
+    pub(crate) fn json_line(&self, value: &impl serde::Serialize) {
         match serde_json::to_string(value) {
             Ok(line) => write_out(&format!("{line}\n")),
             Err(error) => eprintln!("nmtzk: {error}"),
@@ -58,6 +59,9 @@ pub(crate) fn write_out(text: &str) {
 /// Runs one subcommand and returns the process exit code.
 pub(crate) fn command(command: Command, context: &Context) -> ExitCode {
     let language = context.language;
+    if let Some((name, words)) = command.activity() {
+        return crate::activity::run(name, &words, context);
+    }
     match command {
         Command::List { shelf } => {
             if context.json {
@@ -89,6 +93,11 @@ pub(crate) fn command(command: Command, context: &Context) -> ExitCode {
             let options = RunOptions { seed, attacks: !no_attacks };
             run(&target, example, &options, context)
         }
+        Command::Cave { .. }
+        | Command::Trio { .. }
+        | Command::Pool { .. }
+        | Command::Ceremony { .. }
+        | Command::Forge { .. } => ExitCode::from(USAGE),
     }
 }
 

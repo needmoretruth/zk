@@ -65,7 +65,7 @@ fn the_slash_popup_opens_directly_above_the_composer_with_eight_rows() {
         let first = composer_top - 8;
         assert!(text[first].contains("/help"), "{}", screen(&buffer));
         assert!(text[first + 1].contains("/list [shelf]"));
-        assert!(text[composer_top - 1].contains("/quit"));
+        assert!(text[composer_top - 1].contains("/pool"), "{}", screen(&buffer));
         assert!(!text[first - 1].contains("/"), "only eight rows: {}", text[first - 1]);
         assert_eq!(reversed_rows(&buffer), [first as u16], "only the selected row is reversed");
         assert_eq!(buffer[(1, first as u16)].fg, Color::Cyan);
@@ -262,6 +262,7 @@ fn ascii_mode_swaps_every_symbol() {
         zk_tui::Settings {
             language: zk_i18n::Language::ENGLISH,
             look: Look { color: false, ascii: true },
+            ..zk_tui::Settings::default()
         },
     );
     let buffer = draw(&mut app, 80, 24);

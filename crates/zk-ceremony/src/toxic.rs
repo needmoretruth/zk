@@ -9,7 +9,9 @@
 //! truth of the statement never enter.
 
 use bellman::SynthesisError;
-use bellman::groth16::{Parameters, Proof, VerifyingKey, generate_parameters};
+use bellman::groth16::{
+    Parameters, Proof, VerifyingKey, generate_parameters, prepare_verifying_key, verify_proof,
+};
 use bls12_381::{Bls12, G1Projective, G2Projective, Scalar};
 use ff::Field;
 use group::Curve;
@@ -130,4 +132,12 @@ pub fn forge(
         b: (G2Projective::generator() * b).to_affine(),
         c: c.to_affine(),
     })
+}
+
+/// Whether bellman's ordinary Groth16 verifier accepts `proof` for `public_inputs` under `vk`.
+///
+/// The verifier every node would run: it sees only the verifying key, the public inputs and the
+/// proof, never the toxic waste, so it has no way to tell a forged proof from an honest one.
+pub fn verify(vk: &VerifyingKey<Bls12>, proof: &Proof<Bls12>, public_inputs: &[Scalar]) -> bool {
+    verify_proof(&prepare_verifying_key(vk), proof, public_inputs).is_ok()
 }
