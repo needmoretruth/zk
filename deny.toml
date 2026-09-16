@@ -36,6 +36,9 @@ unknown-git = "deny"
 allow-git = [
     # lambdaworks: the PLONK exhibit (Apache-2.0 at the repository root).
     "https://github.com/lambdaclass/lambdaworks",
+    # bulletproofs: the R1CS prover sits behind the `yoloproofs` feature, which the published crate
+    # does not enable (MIT at the repository root).
+    "https://github.com/zkcrypto/bulletproofs",
 ]
 
 [advisories]
