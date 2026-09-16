@@ -3,8 +3,6 @@
 //! `nmtzk list` and `/list` must say the same thing, so both lay out the same documents; this
 //! printer only swaps the terminal widget for text with optional ANSI colour codes.
 
-use std::io::IsTerminal;
-
 use crate::doc::{Entry, Hue, Tone};
 use crate::layout::{doc_rows, entry_rows};
 use crate::look::Look;
@@ -22,8 +20,10 @@ pub struct Printer {
 impl Printer {
     /// A printer for standard output: the terminal's width and colour when it is a terminal and
     /// `NO_COLOR` is unset; unwrapped, uncoloured text when it is a pipe or a file.
-    pub fn stdout(look: Look) -> Printer {
-        let terminal = std::io::stdout().is_terminal();
+    ///
+    /// The caller says whether the output is a terminal, because `nmtzk` writes through a duplicate
+    /// of standard output while descriptor 1 itself points at `/dev/null`.
+    pub fn stdout(look: Look, terminal: bool) -> Printer {
         let width = if terminal {
             crossterm::terminal::size().map_or(100, |(columns, _)| usize::from(columns))
         } else {

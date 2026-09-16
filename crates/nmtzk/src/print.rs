@@ -1,6 +1,6 @@
 //! Subcommands that print and exit.
 
-use std::io::{IsTerminal, Write};
+use std::io::Write;
 use std::process::ExitCode;
 
 use serde_json::json;
@@ -12,6 +12,7 @@ use zk_tui::plain::Printer;
 use zk_tui::views::{self, Comparison};
 
 use crate::cli::Command;
+use crate::console;
 
 /// Exit code for a command line that names something this binary does not have.
 pub(crate) const USAGE: u8 = 2;
@@ -31,27 +32,27 @@ impl Context {
     }
 
     fn fail(&self, entry: &Entry) -> ExitCode {
-        eprint!("{}", self.printer.entry(entry));
+        console::write_err(&self.printer.entry(entry));
         ExitCode::from(USAGE)
     }
 
     pub(crate) fn json_line(&self, value: &impl serde::Serialize) {
         match serde_json::to_string(value) {
             Ok(line) => write_out(&format!("{line}\n")),
-            Err(error) => eprintln!("nmtzk: {error}"),
+            Err(error) => console::write_err(&format!("nmtzk: {error}\n")),
         }
     }
 }
 
-/// Writes to standard output. A reader that stops reading (`nmtzk list | head`) ends the program
-/// quietly instead of with a panic; any other write failure is reported.
+/// Writes to the program's standard output. A reader that stops reading (`nmtzk list | head`) ends
+/// the program quietly instead of with a panic; any other write failure is reported.
 pub(crate) fn write_out(text: &str) {
-    let mut out = std::io::stdout().lock();
+    let mut out = console::out();
     if let Err(error) = out.write_all(text.as_bytes()).and_then(|()| out.flush()) {
         if error.kind() == std::io::ErrorKind::BrokenPipe {
             std::process::exit(0);
         }
-        eprintln!("nmtzk: {error}");
+        console::write_err(&format!("nmtzk: {error}\n"));
         std::process::exit(1);
     }
 }
@@ -188,21 +189,17 @@ fn result_json(
 
 /// A control that shows the stage on standard error while it is a terminal.
 fn progress(system: &'static str, language: Language) -> Control {
-    if !std::io::stderr().is_terminal() {
+    if !console::err().is_terminal() {
         return Control::new();
     }
     Control::with_progress(move |stage| {
-        let mut err = std::io::stderr();
-        let _ = write!(err, "\r\x1b[2K{}", views::status(Some(stage), system, language));
-        let _ = err.flush();
+        console::write_err(&format!("\r\x1b[2K{}", views::status(Some(stage), system, language)));
     })
 }
 
 fn clear_progress() {
-    if std::io::stderr().is_terminal() {
-        let mut err = std::io::stderr();
-        let _ = write!(err, "\r\x1b[2K");
-        let _ = err.flush();
+    if console::err().is_terminal() {
+        console::write_err("\r\x1b[2K");
     }
 }
 

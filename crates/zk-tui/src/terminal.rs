@@ -1,6 +1,7 @@
 //! The real terminal: raw mode, the alternate screen, mouse capture, and putting all of it back.
 
-use std::io::{self, Stdout};
+use std::fs::File;
+use std::io::{self, BufWriter};
 use std::panic;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
@@ -27,10 +28,18 @@ const IDLE: Duration = Duration::from_millis(250);
 /// Whether keyboard enhancement was pushed, so restoring pops it exactly once.
 static ENHANCED: AtomicBool = AtomicBool::new(false);
 
-/// Runs the TUI until the reader quits, then restores the terminal.
-pub fn run(museum: Museum, settings: Settings) -> io::Result<()> {
-    let session = Session::start()?;
-    let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
+/// The drawing surface. Buffered, because the backend writes one escape sequence per changed cell
+/// and flushes once a frame.
+type Screen = Terminal<CrosstermBackend<BufWriter<File>>>;
+
+/// Runs the TUI on `screen` until the reader quits, then restores the terminal.
+///
+/// `screen` is the terminal's output, passed in rather than taken from descriptor 1: `nmtzk` points
+/// descriptor 1 at `/dev/null` so that proof-system crates printing on their own cannot draw over
+/// the screen, and hands over its private duplicate of standard output instead.
+pub fn run(museum: Museum, settings: Settings, screen: File) -> io::Result<()> {
+    let session = Session::start(screen.try_clone()?)?;
+    let mut terminal = Terminal::new(CrosstermBackend::new(BufWriter::new(screen)))?;
     let mut app = App::new(museum, settings);
     let result = event_loop(&mut terminal, &mut app);
     app.stop();
@@ -38,7 +47,7 @@ pub fn run(museum: Museum, settings: Settings) -> io::Result<()> {
     result
 }
 
-fn event_loop(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> io::Result<()> {
+fn event_loop(terminal: &mut Screen, app: &mut App) -> io::Result<()> {
     loop {
         terminal.draw(|frame| app.draw(frame))?;
         if app.should_quit() {
@@ -59,13 +68,15 @@ fn event_loop(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) 
 }
 
 /// The terminal modes the TUI needs, undone on drop and on a panic in the screen thread.
-struct Session;
+struct Session {
+    screen: File,
+}
 
 impl Session {
-    fn start() -> io::Result<Session> {
+    fn start(screen: File) -> io::Result<Session> {
         terminal::enable_raw_mode()?;
-        let session = Session;
-        let mut out = io::stdout();
+        let session = Session { screen };
+        let mut out = &session.screen;
         execute!(out, EnterAlternateScreen, EnableMouseCapture, EnableBracketedPaste)?;
         // Terminals that speak the kitty keyboard protocol can then tell Shift+Enter from Enter.
         if matches!(terminal::supports_keyboard_enhancement(), Ok(true)) {
@@ -75,19 +86,18 @@ impl Session {
             )?;
             ENHANCED.store(true, Ordering::SeqCst);
         }
-        install_panic_hook();
+        install_panic_hook(session.screen.try_clone()?);
         Ok(session)
     }
 }
 
 impl Drop for Session {
     fn drop(&mut self) {
-        restore();
+        restore(&self.screen);
     }
 }
 
-fn restore() {
-    let mut out = io::stdout();
+fn restore(mut out: &File) {
     if ENHANCED.swap(false, Ordering::SeqCst) {
         let _ = execute!(out, PopKeyboardEnhancementFlags);
     }
@@ -97,13 +107,13 @@ fn restore() {
 
 /// A panic in a worker thread is caught and shown as a cell, so its message must not scribble over
 /// the screen; any other panic restores the terminal first so the message is readable.
-fn install_panic_hook() {
+fn install_panic_hook(screen: File) {
     let previous = panic::take_hook();
     panic::set_hook(Box::new(move |info| {
         if thread::current().name() == Some(JOB_THREAD) {
             return;
         }
-        restore();
+        restore(&screen);
         previous(info);
     }));
 }

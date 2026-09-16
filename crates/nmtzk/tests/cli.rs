@@ -68,3 +68,18 @@ fn a_reader_that_stops_early_does_not_crash_the_program() {
     assert!(!String::from_utf8_lossy(&output.stderr).contains("panicked"));
     assert_ne!(output.status.code(), Some(101));
 }
+
+#[test]
+fn upstream_prints_stay_out_of_json_lines_and_error_output() {
+    // Remainder (gkr) prints a warning to standard output when it proves the false claim and a
+    // panic message for every tampered proof it rejects; the museum's attacks trigger both.
+    let run = nmtzk(&["--json", "run", "gkr", "one-plus-one", "--seed", &"07".repeat(32)]);
+    let stdout = String::from_utf8_lossy(&run.stdout);
+    assert!(!stdout.trim().is_empty(), "a report");
+    for line in stdout.lines() {
+        assert!(serde_json::from_str::<serde_json::Value>(line).is_ok(), "not JSON: {line}");
+    }
+    let stderr = String::from_utf8_lossy(&run.stderr);
+    assert!(stderr.is_empty(), "nothing on standard error: {stderr}");
+    assert!(run.status.success(), "{stdout}");
+}
