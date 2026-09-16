@@ -4034,6 +4034,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "zk-ceremony"
+version = "0.0.0"
+dependencies = [
+ "bellman",
+ "bls12_381",
+ "ff",
+ "group",
+ "rand_core 0.6.4",
+ "sha2 0.11.0",
+ "zk-circuit",
+ "zk-examples",
+]
+
+[[package]]
 name = "zk-circuit"
 version = "0.0.0"
 dependencies = [

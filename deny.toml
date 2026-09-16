@@ -39,10 +39,17 @@ allow-git = [
     # bulletproofs: the R1CS prover sits behind the `yoloproofs` feature, which the published crate
     # does not enable (MIT at the repository root).
     "https://github.com/zkcrypto/bulletproofs",
+    # jellyfish: the TurboPlonk/UltraPlonk exhibit; not published to crates.io (MIT at the root).
+    "https://github.com/EspressoSystems/jellyfish",
 ]
 
 [advisories]
 yanked = "warn"
+ignore = [
+    # `paste` is a macro Plonky3 uses at compile time; the advisory says it is no longer maintained,
+    # not that it is unsafe, and nothing of it runs in the program.
+    { id = "RUSTSEC-2024-0436", reason = "unmaintained compile-time macro used by Plonky3; no known vulnerability" },
+]
 
 # lambdaworks-plonk inherits no license field from its manifest; the repository is Apache-2.0
 # (LICENSE at its root and `license = "Apache-2.0"` in the workspace manifest).

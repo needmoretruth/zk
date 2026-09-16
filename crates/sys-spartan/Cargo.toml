@@ -1,0 +1,25 @@
+[package]
+name = "sys-spartan"
+description = "Spartan, the transparent sum-check zkSNARK for R1CS, run by Microsoft's spartan crate over ristretto255 on the museum's seven statements."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built from source only; nothing here is published to crates.io (see the README).
+publish = false
+
+[dependencies]
+zk-core = { path = "../zk-core" }
+zk-circuit = { path = "../zk-circuit" }
+zk-examples = { path = "../zk-examples" }
+# The upstream prover and verifier; its library target is named `libspartan`.
+spartan = "0.9.0"
+# Spartan writes its proofs with bincode 1 (`bincode::serialize`), so the museum does too.
+bincode = "1.3.3"
+# Spartan's own example builds assignments with this scalar; its internal one is private.
+curve25519-dalek = { version = "4.1.3", default-features = false }
+merlin = "3.0.0"
+
+[lints]
+workspace = true
