@@ -77,14 +77,21 @@ Circle STARK까지 있습니다. 시스템마다 역사와 장점, 단점을 적
 
 [GitHub Releases](https://github.com/needmoretruth/zk/releases)마다 플랫폼별 압축 파일이
 `nmtzk-<version>-<target>.tar.gz`라는 이름으로 올라옵니다. 대상은 `x86_64-unknown-linux-gnu`,
-`aarch64-unknown-linux-gnu`, `x86_64-apple-darwin`, `aarch64-apple-darwin`이고, 파일마다 `.sha256` 파일이 함께
-있습니다. 압축 파일에는 실행 파일, 라이선스, 두 README, bash·zsh·fish용 자동 완성 스크립트가 들어 있습니다.
+`aarch64-unknown-linux-gnu`, `x86_64-apple-darwin`, `aarch64-apple-darwin`이고, `<version>`은 태그에서 `v`를 뗀
+값입니다(`v0.1.0`이면 `0.1.0`). 파일마다 `.sha256` 파일이 함께 있습니다. 압축 파일에는 실행 파일, 라이선스, 두
+README, bash·zsh·fish용 자동 완성 스크립트가 들어 있습니다.
 
 ```sh
-shasum -a 256 -c nmtzk-<version>-<target>.tar.gz.sha256
+shasum -a 256 -c nmtzk-<version>-<target>.tar.gz.sha256   # 또는: sha256sum -c …
 tar -xzf nmtzk-<version>-<target>.tar.gz
 ./nmtzk-<version>-<target>/nmtzk --version
 ```
+
+- **Linux:** 실행 파일은 Ubuntu 24.04에서 빌드하므로 glibc 2.39 이상이 필요합니다(Ubuntu 24.04, Debian 13, Fedora 40
+  이후). 더 오래된 시스템에서는 소스에서 빌드하세요.
+- **macOS:** 실행 파일에는 서명이 없습니다. 브라우저로 받으면 표시가 붙고 Gatekeeper가 실행을 막습니다.
+  `xattr -d com.apple.quarantine nmtzk-<version>-<target>/nmtzk`로 표시를 지우거나, 표시를 남기지 않는
+  `curl -LO`로 받으세요.
 
 ### 소스에서
 
@@ -99,10 +106,13 @@ cargo build --release -p nmtzk               # target/release/nmtzk
 
 ### 셸 자동 완성
 
-`nmtzk completions <bash|zsh|fish|elvish|powershell>`은 자동 완성 스크립트를 표준 출력으로 내보냅니다.
+`nmtzk completions <bash|zsh|fish|elvish|powershell>`은 자동 완성 스크립트를 표준 출력으로 내보냅니다. 릴리스 압축
+파일의 `completions/`에는 앞의 셋이 들어 있습니다.
 
 ```sh
 nmtzk completions bash > ~/.local/share/bash-completion/completions/nmtzk
+nmtzk completions zsh > ~/.zfunc/_nmtzk             # ~/.zshrc에서 compinit 전에 fpath+=(~/.zfunc)
+nmtzk completions fish > ~/.config/fish/completions/nmtzk.fish
 ```
 
 ## 쓰는 법
@@ -135,27 +145,32 @@ nmtzk --json run all one-plus-one > runs.jsonl
 nmtzk pool wallet new alice && nmtzk pool faucet alice 10 && nmtzk pool shield alice 5
 ```
 
-정직한 증명이 거부되거나, 공격이 받아들여지거나, 실행이 실패하면 종료 코드가 0이 아니므로 `run all`을 스크립트에서
-쓸 수 있습니다. `--seed`에 16진수 64자리를 주면 실행의 비밀값을 똑같이 되풀이할 수 있습니다. 주지 않으면 운영체제에서
-뽑습니다.
+정직한 증명이 거부되거나, 공격이 받아들여지거나, 실행이 실패하거나, 요청한 트랜잭션을 풀의 원장이 거절하면 종료
+코드가 1이고, 해석할 수 없는 명령줄이면 2입니다. 그래서 `run all`을 스크립트에서 쓸 수 있습니다. `--seed`에 16진수
+64자리를 주면 실행의 비밀값을 똑같이 되풀이할 수 있습니다. 주지 않으면 운영체제에서 뽑습니다.
+
+시스템 대부분은 예제 하나를 1초도 안 걸려 끝냅니다. 느린 것은 GKR입니다. 영지식 증명자가 `pool-spend`에 1분쯤,
+`membership`에 30초쯤 걸리므로, 그 두 예제의 `run all`은 1~2분 걸립니다.
 
 ## 전체 화면 프로그램
 
 위에는 결과 기록이, 아래에는 슬래시 명령을 치는 입력창이 있습니다. 명령은 위의 것들에 `/help`, `/lang <en|ko>`,
 `/clear`, `/quit`이 더해집니다. 슬래시 없이 명령 이름만 쳐도 됩니다. `/about <system>`은 그 시스템의 페이지를 열고,
-ctrl+o로 다시 엽니다. `NO_COLOR`를 설정하면 색을 쓰지 않고, `TERM=linux`에서는 `--ascii`처럼 ASCII로 그립니다.
+ctrl+o로 다시 엽니다. esc는 실행을 멈추고, ctrl+c를 두 번 누르면 끝납니다. `NO_COLOR`를 설정하면 색을 쓰지 않고,
+`TERM=linux`에서는 `--ascii`처럼 ASCII로 그리며, `TERM=dumb`에서는 전체 화면 프로그램 없이 글만 출력합니다.
 
 ## 데이터 디렉터리
 
 무언가를 저장하는 것은 장난감 비공개 송금뿐입니다. 원장과 지갑은 `$XDG_DATA_HOME/nmtzk`나
 `~/.local/share/nmtzk`에, macOS에서는 `~/Library/Application Support/nmtzk`에 둡니다. `--data-dir`로 다른 곳을
-지정할 수 있고, `nmtzk pool reset`은 지금 풀이 쓰는 시스템의 원장과 지갑을 지웁니다.
+지정할 수 있습니다. `nmtzk` 프로세스 여럿이 한 풀을 써도 차례를 지켜 씁니다. `nmtzk pool reset --yes`는 지금 풀이
+쓰는 시스템의 원장과 지갑을 지우고, 파일이 망가진 풀도 새로 시작하게 해 줍니다.
 
 ## 실제 가치를 지키는 데 쓰지 마세요
 
 이곳은 박물관입니다. 교육용 구현과 자작 구현은 이 저장소가 직접 썼고 감사받지 않았습니다. 원조 크레이트도 여기서는
-장난감 회로를 증명하고, 신뢰 설정이 있다면 여러분의 컴퓨터에서 도는 한 사람짜리 의식입니다. 이 저장소의 어떤 것도 가치 있는 무언가를
-지키려고 만든 것이 아닙니다.
+장난감 회로를 증명하고, 신뢰 설정이 있다면 여러분의 컴퓨터에서 도는 한 사람짜리 의식입니다. 이 저장소의 어떤 것도
+가치 있는 무언가를 지키려고 만든 것이 아닙니다.
 
 ## 개발
 
@@ -169,7 +184,7 @@ cargo deny check
 CI(`.github/workflows/check.yml`)는 앞의 셋을 Linux와 macOS에서 돌리고, 라이선스·출처·보안 권고는 `cargo deny`로
 확인합니다. 시스템의 메타데이터를 바꿨다면 `NMTZK_BLESS=1 cargo test -p nmtzk --test readme`로 두 README의 표를 다시
 만드세요. `nmtzk`는 원조 크레이트가 표준 출력과 표준 오류에 찍는 내용을 기본으로 감춥니다. 보고 싶다면
-`NMTZK_UPSTREAM_OUTPUT=1`을 설정하세요.
+`NMTZK_UPSTREAM_OUTPUT=1`을 설정하면 표준 오류에 나옵니다.
 
 ## 라이선스
 

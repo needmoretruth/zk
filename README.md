@@ -78,14 +78,21 @@ Envelopes and digests use ToyHash, a toy for teaching and not a real hash.
 
 Each [GitHub Release](https://github.com/needmoretruth/zk/releases) has an archive per platform, named
 `nmtzk-<version>-<target>.tar.gz`, for `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`,
-`x86_64-apple-darwin` and `aarch64-apple-darwin`. Next to each is a `.sha256` file. The archive holds the binary,
-the licence, both READMEs and completion scripts for bash, zsh and fish.
+`x86_64-apple-darwin` and `aarch64-apple-darwin`, where `<version>` is the tag without its `v` (`0.1.0` for
+`v0.1.0`). Next to each is a `.sha256` file. The archive holds the binary, the licence, both READMEs and completion
+scripts for bash, zsh and fish.
 
 ```sh
-shasum -a 256 -c nmtzk-<version>-<target>.tar.gz.sha256
+shasum -a 256 -c nmtzk-<version>-<target>.tar.gz.sha256   # or: sha256sum -c …
 tar -xzf nmtzk-<version>-<target>.tar.gz
 ./nmtzk-<version>-<target>/nmtzk --version
 ```
+
+- **Linux:** the binaries are built on Ubuntu 24.04 and need glibc 2.39 or newer (Ubuntu 24.04, Debian 13, Fedora 40
+  or later). On an older system, build from source.
+- **macOS:** the binaries are not signed. A browser marks the download, and Gatekeeper then refuses to open it; clear
+  the mark with `xattr -d com.apple.quarantine nmtzk-<version>-<target>/nmtzk`, or download with `curl -LO`, which
+  leaves no mark.
 
 ### From source
 
@@ -100,10 +107,13 @@ cargo build --release -p nmtzk               # target/release/nmtzk
 
 ### Shell completions
 
-`nmtzk completions <bash|zsh|fish|elvish|powershell>` prints a completion script to standard output:
+`nmtzk completions <bash|zsh|fish|elvish|powershell>` prints a completion script to standard output. The release
+archives carry the first three in `completions/`.
 
 ```sh
 nmtzk completions bash > ~/.local/share/bash-completion/completions/nmtzk
+nmtzk completions zsh > ~/.zfunc/_nmtzk             # with fpath+=(~/.zfunc) before compinit in ~/.zshrc
+nmtzk completions fish > ~/.config/fish/completions/nmtzk.fish
 ```
 
 ## Usage
@@ -162,27 +172,33 @@ nmtzk pool wallet new alice && nmtzk pool faucet alice 10 && nmtzk pool shield a
   └ A smoke detector, not a proof of zero knowledge.
 ```
 
-The exit code is non-zero when an honest proof was rejected, an attack was accepted or a run failed, so `run all`
-works in scripts. `--seed` takes 64 hex digits to make a run's secrets repeatable; without it they come from the OS.
+The exit code is 1 when an honest proof was rejected, an attack was accepted, a run failed or the pool's ledger
+refused a transaction you asked for, and 2 for a command line that does not parse, so `run all` works in scripts.
+`--seed` takes 64 hex digits to make a run's secrets repeatable; without it they come from the OS.
+
+Most systems finish an example in well under a second. GKR is the slow one: its zero-knowledge prover takes about a
+minute on `pool-spend` and half a minute on `membership`, so `run all` on those takes a minute or two.
 
 ## The full-screen program
 
 A transcript of results above a composer where slash commands are typed. The commands are the ones above plus
 `/help`, `/lang <en|ko>`, `/clear` and `/quit`; a command name typed without its slash works too.
-`/about <system>` opens the system's page, and ctrl+o opens it again. Colour follows `NO_COLOR`; `TERM=linux`
-switches to ASCII as `--ascii` does.
+`/about <system>` opens the system's page, and ctrl+o opens it again. Esc stops a run, and ctrl+c twice leaves.
+Colour follows `NO_COLOR`; `TERM=linux` switches to ASCII as `--ascii` does, and `TERM=dumb` gets plain text and no
+full-screen program.
 
 ## Data directory
 
 Only the Toy Shielded Pool writes anything: its ledgers and wallets go to `$XDG_DATA_HOME/nmtzk`, or
-`~/.local/share/nmtzk`, or `~/Library/Application Support/nmtzk` on macOS. `--data-dir` puts them elsewhere, and
-`nmtzk pool reset` deletes the ledger and wallets of the system the pool is using.
+`~/.local/share/nmtzk`, or `~/Library/Application Support/nmtzk` on macOS. `--data-dir` puts them elsewhere. Any
+number of `nmtzk` processes can use one pool: each takes its turn. `nmtzk pool reset --yes` deletes the ledger and
+wallets of the system the pool is using, and starts over a pool whose files were damaged.
 
 ## Not for real value
 
 This is a museum. The teaching and homemade implementations are written for this repository and have not been
-audited, and the upstream crates run here on toy circuits, with any trusted setup a one-person ceremony on your machine. Nothing in this
-repository is meant to protect anything of value.
+audited, and the upstream crates run here on toy circuits, with any trusted setup a one-person ceremony on your
+machine. Nothing in this repository is meant to protect anything of value.
 
 ## Development
 
@@ -196,7 +212,7 @@ cargo deny check
 CI (`.github/workflows/check.yml`) runs the first three on Linux and macOS, and `cargo deny` for licences, sources
 and advisories. After a change to a system's metadata, regenerate the tables in both READMEs with
 `NMTZK_BLESS=1 cargo test -p nmtzk --test readme`. By default `nmtzk` silences what upstream crates print on
-standard output and error; set `NMTZK_UPSTREAM_OUTPUT=1` to see it.
+standard output and error; set `NMTZK_UPSTREAM_OUTPUT=1` to see it on standard error.
 
 ## License
 
