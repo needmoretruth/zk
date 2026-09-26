@@ -7795,6 +7795,7 @@ dependencies = [
  "pulldown-cmark",
  "ratatui",
  "serde_json",
+ "signal-hook",
  "sys-bctv14",
  "sys-groth16",
  "sys-halo2",
