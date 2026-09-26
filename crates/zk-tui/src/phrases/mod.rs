@@ -105,6 +105,52 @@ mod tests {
         }
     }
 
+    /// Lists every phrase in one table that has no column of its own for `language`.
+    fn untranslated<M: std::fmt::Debug + Copy>(
+        name: &str,
+        all: &[M],
+        translated: fn(M, Language) -> bool,
+        language: Language,
+    ) -> Vec<String> {
+        all.iter()
+            .filter(|msg| !translated(**msg, language))
+            .map(|msg| {
+                format!("{name}::{msg:?} has no {} ({})", language.endonym(), language.code())
+            })
+            .collect()
+    }
+
+    #[test]
+    fn every_phrase_is_translated_into_every_language() {
+        let mut missing = Vec::new();
+        for language in Language::ALL.iter().copied() {
+            missing.extend(untranslated("ui", ui::Msg::ALL, ui::Msg::translated, language));
+            missing.extend(untranslated("run", run::Msg::ALL, run::Msg::translated, language));
+            missing.extend(untranslated(
+                "catalog",
+                catalog::Msg::ALL,
+                catalog::Msg::translated,
+                language,
+            ));
+            missing.extend(untranslated("cave", cave::Msg::ALL, cave::Msg::translated, language));
+            missing.extend(untranslated("trio", trio::Msg::ALL, trio::Msg::translated, language));
+            missing.extend(untranslated("pool", pool::Msg::ALL, pool::Msg::translated, language));
+            missing.extend(untranslated(
+                "ceremony",
+                ceremony::Msg::ALL,
+                ceremony::Msg::translated,
+                language,
+            ));
+            missing.extend(untranslated(
+                "forge",
+                forge::Msg::ALL,
+                forge::Msg::translated,
+                language,
+            ));
+        }
+        assert!(missing.is_empty(), "untranslated phrases:\n{}", missing.join("\n"));
+    }
+
     #[test]
     fn fill_replaces_named_values_only() {
         assert_eq!(fill("Proving with {system}", &[("system", "Groth16")]), "Proving with Groth16");

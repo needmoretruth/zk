@@ -51,6 +51,23 @@ macro_rules! messages {
                 }
             }
 
+            /// Whether the line has its own column for the language, rather than falling back.
+            /// English is always there, since it is what everything else falls back to.
+            pub fn translated(self, language: $crate::Language) -> bool {
+                if language == $crate::Language::ENGLISH {
+                    return true;
+                }
+                let code = language.code();
+                match self {
+                    $(
+                        Msg::$key => {
+                            $( if code == stringify!($lang) { return true; } )*
+                            false
+                        }
+                    )*
+                }
+            }
+
             /// Every phrase, so a test can walk the whole table.
             pub const ALL: &'static [Msg] = &[ $( Msg::$key, )* ];
         }
@@ -75,6 +92,14 @@ mod tests {
     #[test]
     fn a_missing_translation_falls_back_to_english_not_to_a_blank() {
         assert_eq!(Msg::EnglishOnly.text(Language::KOREAN), "Verifier");
+    }
+
+    #[test]
+    fn a_table_knows_which_lines_have_their_own_column() {
+        assert!(Msg::Both.translated(Language::ENGLISH));
+        assert!(Msg::Both.translated(Language::KOREAN));
+        assert!(Msg::EnglishOnly.translated(Language::ENGLISH));
+        assert!(!Msg::EnglishOnly.translated(Language::KOREAN));
     }
 
     #[test]
