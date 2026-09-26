@@ -112,11 +112,65 @@ fn zk_cell(zk: ZeroKnowledge, language: Language) -> Vec<Span> {
 
 fn code_cell(implementation: &Implementation, language: Language) -> Vec<Span> {
     match implementation {
-        Implementation::Upstream { .. } => vec![plain(C::CodeUpstream.text(language))],
-        Implementation::Teaching { .. } => super::caution(C::CodeTeaching.text(language)),
-        Implementation::Companion { .. } => vec![plain(C::CodeCompanion.text(language))],
-        Implementation::Homemade => vec![plain(C::CodeHomemade.text(language))],
+        Implementation::Teaching { .. } => super::caution(code_word(implementation, language)),
+        _ => vec![plain(code_word(implementation, language))],
     }
+}
+
+fn code_word(implementation: &Implementation, language: Language) -> &'static str {
+    match implementation {
+        Implementation::Upstream { .. } => C::CodeUpstream,
+        Implementation::Teaching { .. } => C::CodeTeaching,
+        Implementation::Companion { .. } => C::CodeCompanion,
+        Implementation::Homemade => C::CodeHomemade,
+    }
+    .text(language)
+}
+
+/// The systems table of the top-level README, as GitHub Markdown, one row per system in the
+/// order given. Every cell comes from [`SystemMeta`] and the same words `/list` and `/about` use;
+/// `crates/nmtzk/tests/readme.rs` checks `README.md` and `README.ko.md` against it.
+pub fn readme_table(metas: &[&SystemMeta], language: Language) -> String {
+    let header = [
+        C::ColSystem,
+        C::ColId,
+        C::ColShelf,
+        C::ColYear,
+        C::ColSetup,
+        C::ColZk,
+        C::ColProofSize,
+        C::ColPostQuantum,
+        C::ColCode,
+        C::ColStatus,
+    ];
+    let page = if language.code() == "ko" { "README.ko.md" } else { "README.md" };
+    let mut out = markdown_row(header.iter().map(|msg| msg.text(language).to_string()));
+    out.push_str(&markdown_row(header.iter().map(|_| "---".to_string())));
+    for meta in metas {
+        let post_quantum = if meta.post_quantum() { C::Yes } else { C::No };
+        out.push_str(&markdown_row([
+            format!("[{}](catalog/{}/{page})", markdown_link_text(meta.name), meta.id),
+            format!("`{}`", meta.id),
+            super::shelf_name(meta.shelf, language).to_string(),
+            meta.year.to_string(),
+            trusted_setup(meta.trusted_setup, language).to_string(),
+            zero_knowledge(meta.zero_knowledge, language).to_string(),
+            proof_size(meta.proof_size, language).to_string(),
+            post_quantum.text(language).to_string(),
+            code_word(&meta.implementation, language).to_string(),
+            status(meta, language),
+        ]));
+    }
+    out
+}
+
+fn markdown_row(cells: impl IntoIterator<Item = String>) -> String {
+    let cells: Vec<String> = cells.into_iter().map(|cell| cell.replace('|', "\\|")).collect();
+    format!("| {} |\n", cells.join(" | "))
+}
+
+fn markdown_link_text(text: &str) -> String {
+    text.replace('[', "\\[").replace(']', "\\]")
 }
 
 /// What `/about <id>` shows in the transcript, and the page to open when there is one.

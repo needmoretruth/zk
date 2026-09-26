@@ -13,7 +13,7 @@ mod stage;
 pub(crate) mod trio;
 mod welcome;
 
-pub use catalog::{Page, about, list, no_systems, unknown_system};
+pub use catalog::{Page, about, list, no_systems, readme_table, unknown_system};
 pub use compare::Comparison;
 pub use examples::examples;
 pub(crate) use help::{help, shortcuts};

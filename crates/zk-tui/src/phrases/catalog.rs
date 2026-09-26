@@ -94,4 +94,8 @@ zk_i18n::messages! {
     ExPoolSpend { en: "A spend in the Toy Shielded Pool.", ko: "장난감 비공개 송금의 지출 하나." },
     ExPoolSpendNoRangeChecks { en: "A pool spend with the range checks removed, to show a counterfeit getting through.", ko: "범위 확인을 뺀 송금 지출. 위조 동전이 통과하는 모습을 보여 줍니다." },
     ExPoolSpendUnboundNullifier { en: "A pool spend whose nullifier is not bound to the note, to show a double spend getting through.", ko: "널리파이어가 노트에 묶이지 않은 송금 지출. 이중 지출이 통과하는 모습을 보여 줍니다." },
+    ColSystem { en: "System", ko: "시스템" },
+    ColShelf { en: "Shelf", ko: "선반" },
+    ColPostQuantum { en: "Post-quantum", ko: "양자 내성" },
+    ColStatus { en: "Status", ko: "상태" },
 }
