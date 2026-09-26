@@ -25,6 +25,7 @@ pub enum Behaviour {
     AcceptsAnything,
     Leaky,
     Interactive,
+    PanicsWhileVerifying,
 }
 
 pub struct Mock<F> {
@@ -138,6 +139,9 @@ impl<F: ZkField> Prepared for Ready<F> {
         proof: &[u8],
         _: &Control,
     ) -> Result<Verdict, SystemError> {
+        if self.behaviour == Behaviour::PanicsWhileVerifying {
+            panic!("an upstream assertion failed");
+        }
         if self.behaviour == Behaviour::AcceptsAnything {
             return Ok(Verdict::Accepted);
         }

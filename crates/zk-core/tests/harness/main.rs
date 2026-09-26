@@ -106,6 +106,25 @@ fn a_cancelled_run_says_it_stopped_instead_of_failing() {
 }
 
 #[test]
+fn a_panic_in_the_system_ends_that_run_as_a_failure_at_the_stage_it_reached() {
+    let options = RunOptions { seed: Some(SEED), attacks: true };
+    let result = Mock::<Bn254>::new(Behaviour::PanicsWhileVerifying).run(
+        ExampleId::OnePlusOne,
+        &options,
+        &Control::new(),
+    );
+    match result.unwrap_err() {
+        RunError::Failed {
+            stage: zk_core::Stage::Verify,
+            error: zk_core::SystemError::Failed(why),
+        } => {
+            assert!(why.contains("panicked: an upstream assertion failed"), "{why}");
+        }
+        other => panic!("expected a failure while verifying, got {other:?}"),
+    }
+}
+
+#[test]
 fn an_unsupported_example_is_refused_before_any_work() {
     let result = Mock::<Bn254>::new(Behaviour::Sound).run(
         ExampleId::PoolSpend,

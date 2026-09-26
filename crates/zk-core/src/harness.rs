@@ -1,5 +1,8 @@
 //! The one procedure that runs, times and attacks every in-process system the same way.
 
+use std::any::Any;
+use std::panic::{self, AssertUnwindSafe};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Instant;
 
 use zk_examples::{ExampleId, InstanceKind};
@@ -15,8 +18,52 @@ use crate::system::{
     Verdict,
 };
 
+/// Why an attack did not apply, as phrase keys a screen turns into words.
+pub mod not_applicable {
+    /// The proof has no bytes to flip.
+    pub const EMPTY_PROOF: &str = "empty-proof";
+    /// The example has no public input to change.
+    pub const NO_PUBLIC_INPUT: &str = "no-public-input";
+    /// A live conversation leaves no proof object behind.
+    pub const LIVE_CONVERSATION: &str = "live-conversation";
+}
+
 /// Runs `example` on `system`: setup, honest proof, verification, then the attack set.
+///
+/// A panic inside the system's code, which upstream crates use for errors they did not expect, ends
+/// this run as a failure at the stage it reached rather than taking every other run down with it.
 pub fn run<S: ProofSystem + ?Sized>(
+    system: &S,
+    example: ExampleId,
+    options: &RunOptions,
+    control: &Control,
+) -> Result<RunReport, RunError> {
+    let reached = Arc::new(Mutex::new(None::<Stage>));
+    let watched = {
+        let reached = Arc::clone(&reached);
+        control.also_reporting(move |stage| {
+            *reached.lock().unwrap_or_else(PoisonError::into_inner) = Some(stage);
+        })
+    };
+    let outcome =
+        panic::catch_unwind(AssertUnwindSafe(|| run_unguarded(system, example, options, &watched)));
+    outcome.unwrap_or_else(|payload| {
+        let stage = reached.lock().unwrap_or_else(PoisonError::into_inner).unwrap_or(Stage::Setup);
+        let error = SystemError::Failed(format!("panicked: {}", panic_text(payload.as_ref())));
+        Err(RunError::Failed { stage, error })
+    })
+}
+
+/// The text a panic carried.
+fn panic_text(payload: &(dyn Any + Send)) -> String {
+    match (payload.downcast_ref::<&str>(), payload.downcast_ref::<String>()) {
+        (Some(text), _) => (*text).to_string(),
+        (_, Some(text)) => text.clone(),
+        _ => "no message".to_string(),
+    }
+}
+
+fn run_unguarded<S: ProofSystem + ?Sized>(
     system: &S,
     example: ExampleId,
     options: &RunOptions,
@@ -103,7 +150,7 @@ fn attack_non_interactive(
     let kind = AttackKind::FlipProofByte;
     control.report(Stage::Attack(kind));
     let (outcome, offset) = if proven.proof.is_empty() {
-        (AttackOutcome::NotApplicable("the proof is empty".to_string()), None)
+        (AttackOutcome::NotApplicable(not_applicable::EMPTY_PROOF.to_string()), None)
     } else {
         let offset = prepared.tamper_offset(&proven.proof).min(proven.proof.len() - 1);
         let mut flipped = proven.proof.clone();
@@ -119,7 +166,7 @@ fn attack_non_interactive(
     let outcome = match bumped(prepared, honest.example, &proven.public)
         .map_err(|e| attack_fail(kind, e))?
     {
-        None => AttackOutcome::NotApplicable("the example has no public input".to_string()),
+        None => AttackOutcome::NotApplicable(not_applicable::NO_PUBLIC_INPUT.to_string()),
         Some(public) => from_verdict(
             prepared.verify(&public, &proven.proof, control).map_err(|e| attack_fail(kind, e))?,
         ),
@@ -160,9 +207,7 @@ fn interactive(
         let kind = AttackKind::FlipProofByte;
         attacks.push(AttackReport {
             kind,
-            outcome: AttackOutcome::NotApplicable(
-                "a live conversation leaves no proof object to alter".to_string(),
-            ),
+            outcome: AttackOutcome::NotApplicable(not_applicable::LIVE_CONVERSATION.to_string()),
             offset: None,
         });
         let kind = AttackKind::BumpPublicInput;
@@ -170,7 +215,7 @@ fn interactive(
         let outcome = match bumped(prepared, honest.example, &played.public)
             .map_err(|e| attack_fail(kind, e))?
         {
-            None => AttackOutcome::NotApplicable("the example has no public input".to_string()),
+            None => AttackOutcome::NotApplicable(not_applicable::NO_PUBLIC_INPUT.to_string()),
             Some(public) => from_verdict(
                 prepared
                     .interact(honest, Some(&public), control)

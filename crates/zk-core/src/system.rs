@@ -152,6 +152,20 @@ impl Control {
         Self::default()
     }
 
+    /// The same control, cancelled together with this one, that also hands every stage to `also`.
+    pub(crate) fn also_reporting(&self, also: impl Fn(Stage) + Send + Sync + 'static) -> Self {
+        let progress = self.progress.clone();
+        Self {
+            cancel: Arc::clone(&self.cancel),
+            progress: Some(Arc::new(move |stage| {
+                also(stage);
+                if let Some(progress) = &progress {
+                    progress(stage);
+                }
+            })),
+        }
+    }
+
     /// A control that reports every stage to `progress`.
     pub fn with_progress(progress: impl Fn(Stage) + Send + Sync + 'static) -> Self {
         Self { cancel: Arc::default(), progress: Some(Arc::new(progress)) }

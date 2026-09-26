@@ -46,7 +46,7 @@ pub(crate) fn run_error(
         RunError::Unsupported { reason } => {
             let text = fill(
                 R::Unsupported.text(language),
-                &[names[0], names[1], ("reason", &humanise(reason))],
+                &[names[0], names[1], ("reason", &reason_text(reason, language))],
             );
             Entry::text(Kind::Warning, text)
         }
@@ -247,10 +247,19 @@ fn attacks(doc: &mut Doc, report: &RunReport, language: Language) {
         heading(doc, R::Attacks.text(language), Some(R::AttacksSkipped.text(language).to_string()));
         return;
     }
-    let held = report.attacks.iter().filter(|attack| attack.outcome.held()).count();
-    let total = report.attacks.len().to_string();
-    let note =
-        fill(R::AttacksHeld.text(language), &[("held", &held.to_string()), ("total", &total)]);
+    let (held, tried) = attack_counts(report);
+    let mut note = fill(
+        R::AttacksHeld.text(language),
+        &[("held", &held.to_string()), ("total", &tried.to_string())],
+    );
+    let skipped = report.attacks.len() - tried;
+    if skipped > 0 {
+        let count = skipped.to_string();
+        note.push_str(&format!(
+            " · {}",
+            fill(R::AttacksNotApplicable.text(language), &[("count", &count)])
+        ));
+    }
     heading(doc, R::Attacks.text(language), Some(note));
     doc.tree(report.attacks.iter().map(|attack| attack_line(attack, language)).collect());
 }
@@ -281,7 +290,8 @@ fn attack_line(attack: &AttackReport, language: Language) -> Vec<Span> {
             ("✗", Hue::Failure, R::OutcomeAccepted.text(language).to_string())
         }
         AttackOutcome::NotApplicable(why) => {
-            ("–", Hue::Secondary, fill(R::OutcomeNotApplicable.text(language), &[("why", why)]))
+            let why = reason_text(why, language);
+            ("–", Hue::Secondary, fill(R::OutcomeNotApplicable.text(language), &[("why", &why)]))
         }
     };
     let text_tone = if hue == Hue::Success { Tone::BODY } else { Tone::of(hue) };
@@ -290,6 +300,27 @@ fn attack_line(attack: &AttackReport, language: Language) -> Vec<Span> {
         plain(format!("{name}: ")),
         span(text, text_tone),
     ]
+}
+
+/// How many attacks the system held, and how many could be tried at all.
+pub(crate) fn attack_counts(report: &RunReport) -> (usize, usize) {
+    let tried = report.attacks.iter().filter(|attack| attack.outcome.applies());
+    let held = tried.clone().filter(|attack| attack.outcome.held()).count();
+    (held, tried.count())
+}
+
+/// A reason an engine gave as a phrase key, in words; keys no table knows are shown as words.
+pub(crate) fn reason_text(key: &str, language: Language) -> String {
+    use zk_core::harness::not_applicable;
+    let msg = match key {
+        not_applicable::EMPTY_PROOF => R::ReasonEmptyProof,
+        not_applicable::NO_PUBLIC_INPUT => R::ReasonNoPublicInput,
+        not_applicable::LIVE_CONVERSATION => R::ReasonLiveConversation,
+        // sys_winterfell::TRACE_TOO_WIDE; nmtzk's tests check the exhibit still says it.
+        "winterfell-trace-too-wide" => R::ReasonTraceTooWide,
+        other => return humanise(other),
+    };
+    msg.text(language).to_string()
 }
 
 fn scan(doc: &mut Doc, meta: &SystemMeta, report: &RunReport, language: Language) {

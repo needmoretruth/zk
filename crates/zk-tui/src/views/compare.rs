@@ -104,15 +104,41 @@ impl Comparison {
 
     fn footer(&self, doc: &mut Doc, language: Language) {
         let secondary = Tone::of(Hue::Secondary);
-        let finished: Vec<&RunReport> =
-            self.results().filter_map(|result| result.as_ref().ok()).collect();
-        let sound = finished.iter().filter(|report| report.sound()).count();
+        // A system counts once it ran to a report or failed; one that does not prove this
+        // statement, or that a stop kept from finishing, is named apart rather than counted.
+        let mut unsupported = Vec::new();
+        let mut not_run = 0usize;
+        let (mut total, mut sound) = (0usize, 0usize);
+        for (meta, state) in &self.rows {
+            match state {
+                RowState::Finished(result) => match result.as_ref() {
+                    Ok(report) => {
+                        total += 1;
+                        sound += usize::from(report.sound());
+                    }
+                    Err(RunError::Unsupported { .. }) => unsupported.push(meta.name),
+                    Err(RunError::Cancelled { .. }) => not_run += 1,
+                    Err(_) => total += 1,
+                },
+                RowState::Waiting | RowState::Running | RowState::Skipped => not_run += 1,
+            }
+        }
         let summary = fill(
             R::CompareSummary.text(language),
-            &[("sound", &sound.to_string()), ("total", &self.rows.len().to_string())],
+            &[("sound", &sound.to_string()), ("total", &total.to_string())],
         );
-        let tone = if sound == self.rows.len() { Tone::of(Hue::Success) } else { Tone::BODY };
+        let everything = sound == total && total > 0 && not_run == 0;
+        let tone = if everything { Tone::of(Hue::Success) } else { Tone::BODY };
         doc.line(vec![span(summary, tone)]);
+        if !unsupported.is_empty() {
+            let text =
+                fill(R::CompareUnsupported.text(language), &[("systems", &unsupported.join(", "))]);
+            doc.line(vec![span(text, secondary)]);
+        }
+        if not_run > 0 {
+            let text = fill(R::CompareNotRun.text(language), &[("count", &not_run.to_string())]);
+            doc.line(vec![span(text, Tone::of(Hue::Caution))]);
+        }
         doc.line(vec![span(R::CompareTimes.text(language), secondary)]);
         doc.line(vec![span(R::CompareSecrets.text(language), secondary)]);
         let details = fill(R::CompareDetails.text(language), &[("example", self.example.id())]);
@@ -183,9 +209,9 @@ fn attacks_cell(report: &RunReport) -> Vec<Span> {
     if report.attacks.is_empty() {
         return vec![span("–", Tone::of(Hue::Secondary))];
     }
-    let held = report.attacks.iter().filter(|attack| attack.outcome.held()).count();
-    let hue = if held == report.attacks.len() { Hue::Success } else { Hue::Failure };
-    vec![span(format!("{held}/{}", report.attacks.len()), Tone::of(hue))]
+    let (held, tried) = super::run::attack_counts(report);
+    let hue = if held == tried { Hue::Success } else { Hue::Failure };
+    vec![span(format!("{held}/{tried}"), Tone::of(hue))]
 }
 
 fn secrets_cell(meta: &SystemMeta, scan: &SecretScan, language: Language) -> Vec<Span> {

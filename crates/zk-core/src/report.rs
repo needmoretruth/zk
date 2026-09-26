@@ -36,7 +36,8 @@ pub enum AttackOutcome {
     /// The verifier was convinced. For the flip attack this can be malleability rather than a bug;
     /// for the other two it means the system is broken.
     Accepted,
-    /// The attack does not apply (there is no proof object in a live conversation).
+    /// The attack does not apply (there is no proof object in a live conversation); the detail is
+    /// a phrase key from [`crate::harness::not_applicable`].
     NotApplicable(String),
 }
 
@@ -44,6 +45,12 @@ impl AttackOutcome {
     /// Whether the system held.
     pub fn held(&self) -> bool {
         !matches!(self, Self::Accepted)
+    }
+
+    /// Whether the attack could be tried at all; one that could not is neither held nor broken,
+    /// and is left out when attacks are counted.
+    pub fn applies(&self) -> bool {
+        !matches!(self, Self::NotApplicable(_))
     }
 }
 
