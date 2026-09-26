@@ -87,7 +87,7 @@ Trio는 교육용 설계이지 경쟁자가 아닙니다. 다만 그 계열은 �
 - Y. Ishai, E. Kushilevitz, R. Ostrovsky, A. Sahai, *Zero-Knowledge from Secure Multiparty Computation*, STOC 2007 — https://doi.org/10.1145/1250790.1250794
 - I. Giacomelli, J. Madsen, C. Orlandi, *ZKBoo: Faster Zero-Knowledge for Boolean Circuits*, USENIX Security 2016 — https://eprint.iacr.org/2016/163
 - M. Chase et al., *Post-Quantum Zero-Knowledge and Signatures from Symmetric-Key Primitives* (ZKB++와 Picnic), CCS 2017 — https://eprint.iacr.org/2017/279
-- D. Katz, V. Kolesnikov, X. Wang, *Improved Non-Interactive Zero Knowledge with Applications to Post-Quantum Signatures*, CCS 2018 — https://eprint.iacr.org/2018/475
+- J. Katz, V. Kolesnikov, X. Wang, *Improved Non-Interactive Zero Knowledge with Applications to Post-Quantum Signatures*, CCS 2018 — https://eprint.iacr.org/2018/475
 - D. Beaver, *Efficient Multiparty Protocols Using Circuit Randomization*, CRYPTO '91 — https://doi.org/10.1007/3-540-46766-1_34
-- NIST IR 8413, PQC 표준화 세 번째 라운드 상태 보고서(2022) — https://nvlpubs.nist.gov/nistpubs/ir/2022/NIST.IR.8413.pdf
+- NIST IR 8413-upd1, PQC 표준화 세 번째 라운드 상태 보고서(2022, 2022년 9월 개정) — https://nvlpubs.nist.gov/nistpubs/ir/2022/NIST.IR.8413-upd1.pdf
 - NIST 추가 디지털 서명 공모 세 번째 라운드에 오른 아홉 방식(2026) — https://www.projecteleven.com/blog/nine-schemes-advance-to-round-3-of-nists-additional-digital-signatures-process

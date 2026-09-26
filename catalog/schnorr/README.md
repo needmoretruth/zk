@@ -107,6 +107,6 @@ This repository is not affiliated with Zcash, the Electric Coin Company or the Z
 - Trail of Bits, *Frozen Heart* disclosure — https://blog.trailofbits.com/2022/04/13/part-1-coordinated-disclosure-of-vulnerabilities-affecting-girault-bulletproofs-and-plonk/
 - F. Benhamouda et al., *On the (in)security of ROS* — https://eprint.iacr.org/2020/945
 - RFC 9591, FROST — https://datatracker.ietf.org/doc/rfc9591/
-- IRTF CFRG, *Interactive Sigma Proofs* (draft) — https://datatracker.ietf.org/doc/draft-irtf-cfrg-sigma-protocols/
+- IRTF CFRG, *Sigma Proofs for Linear Relations* (draft) — https://datatracker.ietf.org/doc/draft-irtf-cfrg-sigma-protocols/
 - Zcash Foundation FROST releases — https://github.com/ZcashFoundation/frost/releases
 - sigma-proofs — https://github.com/sigma-rs/sigma-proofs

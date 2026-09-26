@@ -94,5 +94,5 @@ Try `/run plonky3 pool-spend`, then `/run groth16 pool-spend` for the other end 
 - Release v0.7.0 — https://github.com/Plonky3/Plonky3/releases/tag/v0.7.0
 - Miden VM changelog — https://github.com/0xMiden/miden-vm/blob/next/CHANGELOG.md
 - WHIR integration — https://github.com/Plonky3/Plonky3/pull/1477
-- D. Crites, A. Stewart, refutation of Reed–Solomon proximity-gap conjectures — https://eprint.iacr.org/2025/2046
+- E. Crites, A. Stewart, refutation of Reed–Solomon proximity-gap conjectures — https://eprint.iacr.org/2025/2046
 - L2BEAT ZK catalog, OpenVM — https://l2beat.com/zk-catalog/openvmprover

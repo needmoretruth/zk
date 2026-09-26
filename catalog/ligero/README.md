@@ -75,6 +75,6 @@ circuit instead of with the circuit.
 - S. Ames, C. Hazay, Y. Ishai, M. Venkitasubramaniam, *Ligero: Lightweight Sublinear Arguments Without a Trusted Setup*, CCS 2017 (extended version) — https://eprint.iacr.org/2022/1608
 - Journal version, Designs, Codes and Cryptography (2023) — https://doi.org/10.1007/s10623-023-01222-8
 - M. Frigo, a. shelat, *Anonymous credentials from ECDSA* — https://eprint.iacr.org/2024/2010
-- Longfellow ZK — https://github.com/google/longfellow-zk
+- Longfellow ZK — https://github.com/longfellow-zk/longfellow-zk
 - EU age verification, zero-knowledge annex — https://ageverification.dev/av-doc-technical-specification/docs/annexes/annex-B/annex-B-zkp/
 - IETF draft, Longfellow ZK — https://datatracker.ietf.org/doc/draft-google-cfrg-libzk/

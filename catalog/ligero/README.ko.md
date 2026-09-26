@@ -69,6 +69,6 @@ sumcheck와 합친 것이 아닙니다.
 - S. Ames, C. Hazay, Y. Ishai, M. Venkitasubramaniam, *Ligero: Lightweight Sublinear Arguments Without a Trusted Setup*, CCS 2017 (확장 버전) — https://eprint.iacr.org/2022/1608
 - 학술지 버전, Designs, Codes and Cryptography (2023) — https://doi.org/10.1007/s10623-023-01222-8
 - M. Frigo, a. shelat, *Anonymous credentials from ECDSA* — https://eprint.iacr.org/2024/2010
-- Longfellow ZK — https://github.com/google/longfellow-zk
+- Longfellow ZK — https://github.com/longfellow-zk/longfellow-zk
 - EU 나이 확인, 영지식 부록 — https://ageverification.dev/av-doc-technical-specification/docs/annexes/annex-B/annex-B-zkp/
 - IETF 초안, Longfellow ZK — https://datatracker.ietf.org/doc/draft-google-cfrg-libzk/

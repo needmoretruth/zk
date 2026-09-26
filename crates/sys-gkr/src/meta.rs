@@ -18,7 +18,7 @@ pub static META: SystemMeta = SystemMeta {
     paper: Some(Paper {
         title: "Delegating Computation: Interactive Proofs for Muggles",
         venue: "STOC 2008",
-        url: "https://doi.org/10.1145/2699436",
+        url: "https://doi.org/10.1145/1374376.1374396",
     }),
     trusted_setup: TrustedSetup::None,
     zero_knowledge: ZeroKnowledge::Yes,

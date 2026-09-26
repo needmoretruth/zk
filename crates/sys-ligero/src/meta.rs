@@ -29,7 +29,7 @@ pub static META: SystemMeta = SystemMeta {
     status_as_of: "2026-09",
     status_sources: &[
         "https://ageverification.dev/av-doc-technical-specification/docs/annexes/annex-B/annex-B-zkp/",
-        "https://github.com/google/longfellow-zk",
+        "https://github.com/longfellow-zk/longfellow-zk",
     ],
     deployments: &[Deployment {
         project: "Google Wallet (Longfellow ZK)",

@@ -83,7 +83,7 @@ descendant of the other.
 - Monero 0.13.0 release — https://www.getmonero.org/2018/10/11/monero-0.13.0-released.html
 - H. Chung, K. Han, C. Ju, M. Kim, J. H. Seo, *Bulletproofs+* — https://eprint.iacr.org/2020/735
 - Trail of Bits, *The Frozen Heart vulnerability in Bulletproofs* — https://blog.trailofbits.com/2022/04/15/the-frozen-heart-vulnerability-in-bulletproofs/
-- Monero network upgrade, July 2022 — https://web.getmonero.org/2022/04/20/network-upgrade-july-2022.html
+- Monero network upgrade on 13 August 2022 — https://web.getmonero.org/2022/04/20/network-upgrade-july-2022.html
 - Monero, deprecating unlock time (FCMP++ not yet activated) — https://www.getmonero.org/2026/05/10/deprecating-unlock-time.html
 - Ragu book, Bulletproofs and accumulation — https://github.com/tachyon-zcash/ragu/blob/main/book/src/protocol/prelim/bulletproofs.md
 - bulletproofs (zkcrypto fork) — https://github.com/zkcrypto/bulletproofs · original — https://github.com/dalek-cryptography/bulletproofs

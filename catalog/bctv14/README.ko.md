@@ -85,4 +85,5 @@ A·B·C가 같은 계수를 썼음을 보이는 원소 K 하나, 제약 다항�
 - Zcash counterfeiting vulnerability successfully remediated, Electric Coin Company, 2019-02-05 — https://electriccoin.co/blog/zcash-counterfeiting-vulnerability-successfully-remediated/
 - A. Gabizon, *On the security of the BCTV Pinocchio zk-SNARK variant* — https://eprint.iacr.org/2019/119
 - ZIP 211, Sprout 가치 풀에 새 가치를 더하는 것을 막기 — https://zips.z.cash/zip-0211
-- Zcash 커뮤니티 NU7 투표 — https://zfnd.org/zcap-poll-now-open-nu7/
+- Zcash 커뮤니티 NU7 투표 시작 — https://zfnd.org/zcap-poll-now-open-nu7/
+- Sprout 거래를 막자는 표결을 포함한 코인 보유자 투표 결과, CryptoSlate, 2026-09-18 — https://cryptoslate.com/zcash-holders-vote-to-preserve-halvings-and-defer-recycled-zec-until-2031/

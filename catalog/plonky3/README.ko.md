@@ -92,5 +92,5 @@ L2BEAT는 Scroll을 증명하는 OpenVM을 「Plonky3 기반」으로 적습니�
 - 릴리스 v0.7.0 — https://github.com/Plonky3/Plonky3/releases/tag/v0.7.0
 - Miden VM 변경 기록 — https://github.com/0xMiden/miden-vm/blob/next/CHANGELOG.md
 - WHIR 통합 — https://github.com/Plonky3/Plonky3/pull/1477
-- D. Crites, A. Stewart, Reed–Solomon 근접성 간격 추측 반증 — https://eprint.iacr.org/2025/2046
+- E. Crites, A. Stewart, Reed–Solomon 근접성 간격 추측 반증 — https://eprint.iacr.org/2025/2046
 - L2BEAT ZK 카탈로그, OpenVM — https://l2beat.com/zk-catalog/openvmprover

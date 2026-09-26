@@ -94,7 +94,7 @@ the operating system's randomness for every seed.
 - Y. Ishai, E. Kushilevitz, R. Ostrovsky, A. Sahai, *Zero-Knowledge from Secure Multiparty Computation*, STOC 2007 — https://doi.org/10.1145/1250790.1250794
 - I. Giacomelli, J. Madsen, C. Orlandi, *ZKBoo: Faster Zero-Knowledge for Boolean Circuits*, USENIX Security 2016 — https://eprint.iacr.org/2016/163
 - M. Chase et al., *Post-Quantum Zero-Knowledge and Signatures from Symmetric-Key Primitives* (ZKB++ and Picnic), CCS 2017 — https://eprint.iacr.org/2017/279
-- D. Katz, V. Kolesnikov, X. Wang, *Improved Non-Interactive Zero Knowledge with Applications to Post-Quantum Signatures*, CCS 2018 — https://eprint.iacr.org/2018/475
+- J. Katz, V. Kolesnikov, X. Wang, *Improved Non-Interactive Zero Knowledge with Applications to Post-Quantum Signatures*, CCS 2018 — https://eprint.iacr.org/2018/475
 - D. Beaver, *Efficient Multiparty Protocols Using Circuit Randomization*, CRYPTO '91 — https://doi.org/10.1007/3-540-46766-1_34
-- NIST IR 8413, status report on the third round of the PQC standardization process (2022) — https://nvlpubs.nist.gov/nistpubs/ir/2022/NIST.IR.8413.pdf
+- NIST IR 8413-upd1, status report on the third round of the PQC standardization process (2022, updated September 2022) — https://nvlpubs.nist.gov/nistpubs/ir/2022/NIST.IR.8413-upd1.pdf
 - Nine schemes advance to round 3 of NIST's additional digital signatures process (2026) — https://www.projecteleven.com/blog/nine-schemes-advance-to-round-3-of-nists-additional-digital-signatures-process

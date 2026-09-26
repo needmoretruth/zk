@@ -104,6 +104,6 @@ IRTF 문서는 아직 초안입니다.
 - Trail of Bits, *Frozen Heart* 공개 — https://blog.trailofbits.com/2022/04/13/part-1-coordinated-disclosure-of-vulnerabilities-affecting-girault-bulletproofs-and-plonk/
 - F. Benhamouda 외, *On the (in)security of ROS* — https://eprint.iacr.org/2020/945
 - RFC 9591, FROST — https://datatracker.ietf.org/doc/rfc9591/
-- IRTF CFRG, *Interactive Sigma Proofs* (초안) — https://datatracker.ietf.org/doc/draft-irtf-cfrg-sigma-protocols/
+- IRTF CFRG, *Sigma Proofs for Linear Relations* (초안) — https://datatracker.ietf.org/doc/draft-irtf-cfrg-sigma-protocols/
 - Zcash Foundation FROST 릴리스 — https://github.com/ZcashFoundation/frost/releases
 - sigma-proofs — https://github.com/sigma-rs/sigma-proofs

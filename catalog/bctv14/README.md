@@ -96,4 +96,5 @@ This repository is not affiliated with Zcash, the Electric Coin Company or the Z
 - Zcash counterfeiting vulnerability successfully remediated, Electric Coin Company, 2019-02-05 — https://electriccoin.co/blog/zcash-counterfeiting-vulnerability-successfully-remediated/
 - A. Gabizon, *On the security of the BCTV Pinocchio zk-SNARK variant* — https://eprint.iacr.org/2019/119
 - ZIP 211, Disabling Addition of New Value to the Sprout Chain Value Pool — https://zips.z.cash/zip-0211
-- Zcash community poll on NU7 — https://zfnd.org/zcap-poll-now-open-nu7/
+- Zcash community poll on NU7, opened — https://zfnd.org/zcap-poll-now-open-nu7/
+- The coinholder poll's result, including the vote to disable Sprout transactions, CryptoSlate, 2026-09-18 — https://cryptoslate.com/zcash-holders-vote-to-preserve-halvings-and-defer-recycled-zec-until-2031/

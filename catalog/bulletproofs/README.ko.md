@@ -80,7 +80,7 @@ Halo 2 안에 있는 IPA 다항식 약속이 같은 아이디어로 만들어졌
 - Monero 0.13.0 릴리스 — https://www.getmonero.org/2018/10/11/monero-0.13.0-released.html
 - H. Chung, K. Han, C. Ju, M. Kim, J. H. Seo, *Bulletproofs+* — https://eprint.iacr.org/2020/735
 - Trail of Bits, *The Frozen Heart vulnerability in Bulletproofs* — https://blog.trailofbits.com/2022/04/15/the-frozen-heart-vulnerability-in-bulletproofs/
-- Monero 네트워크 업그레이드, 2022년 7월 — https://web.getmonero.org/2022/04/20/network-upgrade-july-2022.html
+- Monero 네트워크 업그레이드, 2022년 8월 13일 — https://web.getmonero.org/2022/04/20/network-upgrade-july-2022.html
 - Monero, unlock time 폐기 공지(FCMP++ 아직 활성화 전) — https://www.getmonero.org/2026/05/10/deprecating-unlock-time.html
 - Ragu 문서, Bulletproofs와 누적 — https://github.com/tachyon-zcash/ragu/blob/main/book/src/protocol/prelim/bulletproofs.md
 - bulletproofs (zkcrypto 포크) — https://github.com/zkcrypto/bulletproofs · 원본 — https://github.com/dalek-cryptography/bulletproofs
