@@ -242,14 +242,16 @@ fn a_missing_page_is_said_plainly_and_opens_nothing() {
 }
 
 #[test]
-fn a_too_small_terminal_gets_one_line_asking_for_more_room() {
-    for (width, height) in [(59, 24), (80, 15), (40, 10)] {
+fn a_too_small_terminal_asks_for_more_room_without_cutting_off_the_size() {
+    for (width, height, lines) in [(59, 24, 1), (80, 15, 1), (40, 10, 2), (12, 12, 5)] {
         let mut app = app(Museum::empty());
         let buffer = draw(&mut app, width, height);
         let text = rows(&buffer);
-        let filled: Vec<&String> = text.iter().filter(|row| !row.trim().is_empty()).collect();
-        assert_eq!(filled.len(), 1, "{width}×{height}:\n{}", screen(&buffer));
-        assert!(filled[0].starts_with("Please enlarge the terminal"), "{}", filled[0]);
+        let filled: Vec<&str> =
+            text.iter().map(|row| row.trim()).filter(|row| !row.is_empty()).collect();
+        assert_eq!(filled.len(), lines, "{width}×{height}:\n{}", screen(&buffer));
+        let notice = filled.join(" ");
+        assert_eq!(notice, "Please enlarge the terminal to at least 60×16.", "{width}×{height}");
     }
     let mut app = app(Museum::empty());
     assert!(screen(&draw(&mut app, 60, 16)).contains("nmtzk"), "60×16 is big enough");

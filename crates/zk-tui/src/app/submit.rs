@@ -76,6 +76,10 @@ impl App {
                 let text = fill(Msg::LanguageSet.text(chosen), &[("language", chosen.endonym())]);
                 self.transcript.push(Entry::text(Kind::Result, text));
             }
+            // The running activity writes into its cell; clearing it now would throw its result away.
+            Command::Clear if self.job.is_some() => {
+                self.transcript.push(Entry::text(Kind::Warning, Msg::Busy.text(language)));
+            }
             Command::Clear => self.transcript.clear(),
             Command::Quit => self.quit = true,
         }

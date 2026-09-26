@@ -13,7 +13,7 @@ use crate::doc::{Hue, Tone};
 use crate::format;
 use crate::paint::{edge_line, to_line};
 use crate::phrases::ui::Msg;
-use crate::text::{Row, pad, truncate, width};
+use crate::text::{Row, pad, truncate, width, wrap};
 use crate::views;
 
 /// Most rows the popup shows.
@@ -74,11 +74,18 @@ impl App {
         }
     }
 
+    /// The notice asking for a bigger terminal, wrapped so the size it asks for is never cut off,
+    /// and centred as far as the terminal allows.
     fn draw_too_small(&self, frame: &mut Frame, area: Rect) {
         let text = self.look.text(Msg::TooSmall.text(self.language)).into_owned();
-        let row = truncate(vec![(text, Tone::BODY)], usize::from(area.width), "");
-        let line = Rect { y: area.y + area.height / 2, height: 1.min(area.height), ..area };
-        frame.render_widget(Paragraph::new(to_line(row, &self.look)), line);
+        let rows = wrap(&[(text, Tone::BODY)], usize::from(area.width));
+        let height = u16::try_from(rows.len()).unwrap_or(u16::MAX).min(area.height);
+        let top = area.y + (area.height - height) / 2;
+        for (offset, row) in (0..height).zip(rows) {
+            let row = truncate(row, usize::from(area.width), "");
+            let line = Rect { y: top + offset, height: 1, ..area };
+            frame.render_widget(Paragraph::new(to_line(row, &self.look)), line);
+        }
     }
 
     fn draw_working(&self, frame: &mut Frame, area: Rect) {

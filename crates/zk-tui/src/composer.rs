@@ -144,9 +144,12 @@ impl Composer {
         self.recall = Some(index);
     }
 
+    /// Moves to the line above or below, keeping the cursor in the same screen column: a Korean
+    /// syllable is two columns wide, so columns are counted by width, not by characters.
     fn move_line(&mut self, direction: isize) {
         let line_start = self.text[..self.cursor].rfind('\n').map_or(0, |n| n + 1);
-        let column = self.text[line_start..self.cursor].chars().count();
+        let column: usize =
+            self.text[line_start..self.cursor].chars().map(|c| c.width().unwrap_or(0)).sum();
         let target_start = if direction < 0 {
             let previous_end = line_start.saturating_sub(1);
             self.text[..previous_end].rfind('\n').map_or(0, |n| n + 1)
@@ -157,7 +160,16 @@ impl Composer {
             }
         };
         let line = self.text[target_start..].split('\n').next().unwrap_or_default();
-        let offset: usize = line.chars().take(column).map(char::len_utf8).sum();
+        let mut used = 0;
+        let mut offset = 0;
+        for character in line.chars() {
+            let columns = character.width().unwrap_or(0);
+            if used + columns > column {
+                break;
+            }
+            used += columns;
+            offset += character.len_utf8();
+        }
         self.cursor = target_start + offset;
     }
 
@@ -258,5 +270,19 @@ mod tests {
         assert_eq!(composer.text(), "ab\ncd");
         composer.insert("X");
         assert_eq!(composer.text(), "abX\ncd");
+    }
+
+    #[test]
+    fn moving_between_lines_keeps_the_screen_column_under_wide_characters() {
+        let mut composer = Composer::default();
+        composer.insert("abcdefghij\n가나다라마");
+        composer.up();
+        composer.insert("X");
+        assert_eq!(composer.text(), "abcdefghijX\n가나다라마", "five syllables are ten columns");
+        let mut composer = Composer::default();
+        composer.insert("가나다\nabcdef");
+        composer.up();
+        composer.insert("X");
+        assert_eq!(composer.text(), "가나다X\nabcdef");
     }
 }
