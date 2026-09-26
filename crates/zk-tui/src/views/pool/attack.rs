@@ -129,7 +129,9 @@ fn step_doc(number: usize, step: &AttackStep, language: Language) -> Doc {
         details.push(fill(M::StepVerifier.text(language), &[("verdict", verdict.text(language))]));
     }
     if !step.violated.is_empty() {
-        details.push(fill(M::StepBroken.text(language), &[("labels", &step.violated.join("; "))]));
+        let labels: Vec<String> =
+            step.violated.iter().map(|label| assertion(label, language)).collect();
+        details.push(fill(M::StepBroken.text(language), &[("labels", &labels.join("; "))]));
     }
     details.push(fill(
         M::StepAfter.text(language),
@@ -143,4 +145,71 @@ fn step_doc(number: usize, step: &AttackStep, language: Language) -> Doc {
         doc.led(indent(), vec![span(detail, secondary)]);
     }
     doc
+}
+
+/// An assertion of the spend circuit, which names it in English, in the reader's language. The
+/// gadgets build their labels as `"{label}: bit {i} is 0 or 1"`; a label no pattern knows is shown
+/// as it is.
+pub(crate) fn assertion(label: &str, language: Language) -> String {
+    if let Some((head, tail)) = label.rsplit_once(": ") {
+        let bit = |prefix: &str| {
+            tail.strip_prefix(prefix)
+                .and_then(|rest| rest.strip_suffix(" is 0 or 1"))
+                .filter(|index| index.bytes().all(|byte| byte.is_ascii_digit()))
+        };
+        let head = assertion(head, language);
+        if let Some(index) = bit("path bit ") {
+            return fill(M::AssertPathBit.text(language), &[("label", &head), ("index", index)]);
+        }
+        if let Some(index) = bit("bit ") {
+            return fill(M::AssertBit.text(language), &[("label", &head), ("index", index)]);
+        }
+    }
+    let known = match label {
+        "input note" => Some(M::AssertInputNote),
+        "input note is in the tree unless its value is zero" => Some(M::AssertInTree),
+        "nullifier belongs to the input note and key" => Some(M::AssertNullifier),
+        "value in equals value out" => Some(M::AssertBalance),
+        _ => None,
+    };
+    if let Some(msg) = known {
+        return msg.text(language).to_string();
+    }
+    if let Some(name) = label.strip_suffix(" fits in 16 bits") {
+        return fill(M::AssertFits.text(language), &[("name", name)]);
+    }
+    let number = label
+        .strip_prefix("output note ")
+        .and_then(|rest| rest.strip_suffix(" commitment is correct"));
+    match number {
+        Some(number) => fill(M::AssertCommitment.text(language), &[("number", number)]),
+        None => label.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod label_tests {
+    use zk_i18n::Language;
+
+    use super::assertion;
+
+    #[test]
+    fn every_label_the_spend_circuit_makes_reads_in_korean() {
+        let english = [
+            "input note is in the tree unless its value is zero",
+            "input note: path bit 3 is 0 or 1",
+            "nullifier belongs to the input note and key",
+            "output note 2 commitment is correct",
+            "value in equals value out",
+            "v_out_2 fits in 16 bits",
+            "v_out_2 fits in 16 bits: bit 15 is 0 or 1",
+        ];
+        for label in english {
+            assert_eq!(assertion(label, Language::ENGLISH), label);
+            let korean = assertion(label, Language::KOREAN);
+            let words = korean.replace("v_out_2", "");
+            assert!(!words.bytes().any(|byte| byte.is_ascii_lowercase()), "{korean}");
+        }
+        assert_eq!(assertion("something new", Language::KOREAN), "something new");
+    }
 }

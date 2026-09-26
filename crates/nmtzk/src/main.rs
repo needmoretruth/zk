@@ -45,7 +45,7 @@ fn run(cli: Cli) -> ExitCode {
     };
     match cli.command {
         Some(command) => print::command(command, &context),
-        None if std::io::stdin().is_terminal() && console::out().is_terminal() => {
+        None if full_screen_possible() => {
             let settings = Settings {
                 language: cli.lang,
                 look,
@@ -62,7 +62,15 @@ fn run(cli: Cli) -> ExitCode {
         }
         None => {
             print::write_out(&context.printer.entry(&zk_tui::views::welcome(&museum, cli.lang)));
+            print::write_out(&context.printer.entry(&zk_tui::views::not_a_terminal(cli.lang)));
             ExitCode::SUCCESS
         }
     }
+}
+
+/// Whether someone is at a terminal that can show the full-screen program: both ends of it are the
+/// terminal, and `TERM` does not say it understands no escape sequences.
+fn full_screen_possible() -> bool {
+    let term = std::env::var("TERM").unwrap_or_default();
+    std::io::stdin().is_terminal() && console::out().is_terminal() && !zk_tui::dumb_terminal(&term)
 }

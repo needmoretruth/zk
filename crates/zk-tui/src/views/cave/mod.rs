@@ -323,11 +323,11 @@ pub(crate) fn building_verdict(failed: &[u32], floors: usize, language: Language
         doc.led(vec![mark(false)], vec![span(text, Tone::of(Hue::Failure).bold())]);
     }
     let floors = u32::try_from(floors).unwrap_or(u32::MAX);
-    let odds = match survival_one_in(floors) {
-        Some(n) => grouped(n),
-        None => one_in(survival_probability(floors)),
+    let (phrase, odds) = match survival_one_in(floors) {
+        Some(n) => (M::BuildingOdds, grouped(n)),
+        None => (M::BuildingOddsApprox, one_in(survival_probability(floors))),
     };
-    let text = fill(M::BuildingOdds.text(language), &[("floors", &count), ("odds", &odds)]);
+    let text = fill(phrase.text(language), &[("floors", &count), ("odds", &odds)]);
     doc.line(vec![span(text, Tone::of(Hue::Secondary))]);
     doc
 }

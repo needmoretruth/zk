@@ -144,7 +144,7 @@ fn trio_plays_rounds_with_every_check_and_catches_a_cheat() {
     let shown = finished("/trio cheat bad-card --rounds 200");
     assert!(shown.contains("⚠ The false claim is the true witness"), "{shown}");
     let caught = shown.lines().find(|row| row.contains("Caught in round")).expect("caught");
-    assert!(caught.contains("does not satisfy c = a·b"), "{caught}");
+    assert!(caught.contains("does not satisfy c = a⋅b"), "{caught}");
     assert_eq!(count(&shown, "✗ Round "), 1, "{shown}");
 }
 

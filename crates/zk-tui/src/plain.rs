@@ -42,7 +42,12 @@ impl Printer {
         self.text(entry_rows(entry, self.width, &self.look, std::time::Duration::ZERO))
     }
 
-    /// A markdown page as text, ending with a newline.
+    /// One line of plain text, such as a usage error, with this printer's symbols.
+    pub fn line(&self, text: &str) -> String {
+        self.look.text(text).into_owned()
+    }
+
+    /// A markdown page as printed text.
     pub fn page(&self, source: &str) -> String {
         self.text(doc_rows(&markdown::to_doc(source), self.width, &self.look))
     }

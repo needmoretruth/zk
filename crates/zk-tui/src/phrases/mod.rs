@@ -14,7 +14,12 @@ pub(crate) mod trio;
 pub(crate) mod ui;
 
 /// Replaces `{name}` in `template` with the value given for `name`; unknown names are left as they are.
+///
+/// `{name:one/other}` is the word for that many: `one` when the value of `name` is `1`, `other`
+/// otherwise, with `#` in either standing for the value, so English can say "the one scene" and
+/// "all 40 scenes" from one phrase. Languages without plurals simply never write it.
 pub(crate) fn fill(template: &str, values: &[(&str, &str)]) -> String {
+    let lookup = |name: &str| values.iter().find(|(key, _)| *key == name).map(|(_, value)| *value);
     let mut out = String::with_capacity(template.len());
     let mut rest = template;
     while let Some(open) = rest.find('{') {
@@ -22,11 +27,19 @@ pub(crate) fn fill(template: &str, values: &[(&str, &str)]) -> String {
         let after = &rest[open + 1..];
         let replaced = after.find('}').and_then(|close| {
             let name = &after[..close];
-            values.iter().find(|(key, _)| *key == name).map(|(_, value)| (close, *value))
+            match name.split_once(':') {
+                Some((key, forms)) => {
+                    let (one, other) = forms.split_once('/')?;
+                    let count = lookup(key)?;
+                    let form = if count == "1" { one } else { other };
+                    Some((close, form.replace('#', count)))
+                }
+                None => lookup(name).map(|value| (close, value.to_string())),
+            }
         });
         match replaced {
             Some((close, value)) => {
-                out.push_str(value);
+                out.push_str(&value);
                 rest = &after[close + 1..];
             }
             None => {
@@ -155,6 +168,13 @@ mod tests {
     fn fill_replaces_named_values_only() {
         assert_eq!(fill("Proving with {system}", &[("system", "Groth16")]), "Proving with Groth16");
         assert_eq!(fill("{a}{b} {c}", &[("a", "1"), ("b", "{c}")]), "1{c} {c}");
+        let scenes = "{n} {n:scene/scenes}";
+        assert_eq!(fill(scenes, &[("n", "1")]), "1 scene");
+        assert_eq!(fill(scenes, &[("n", "40")]), "40 scenes");
+        assert_eq!(fill(scenes, &[]), scenes, "an unknown count is left as it is");
+        let all = "{n:the one scene/all # scenes}";
+        assert_eq!(fill(all, &[("n", "1")]), "the one scene");
+        assert_eq!(fill(all, &[("n", "40")]), "all 40 scenes");
         assert_eq!(humanise("public-inputs"), "public inputs");
     }
 }

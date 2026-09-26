@@ -19,7 +19,7 @@ pub(crate) fn run(command: &str, words: &[String], context: &Context) -> ExitCod
     let request = match activities::request(command, words, language, context.data_dir.clone()) {
         Ok(request) => request,
         Err(message) => {
-            console::write_err(&format!("{message}\n"));
+            console::write_err(&format!("{}\n", context.printer.line(&message)));
             return ExitCode::from(USAGE);
         }
     };
@@ -72,22 +72,28 @@ fn confirm(request: Request, context: &Context) -> (Request, bool) {
     console::write_err(&format!("{question} "));
     let mut answer = String::new();
     let read = std::io::stdin().lock().read_line(&mut answer);
-    if read.is_ok() && answer.trim().eq_ignore_ascii_case("yes") {
+    if read.is_ok() && agrees(answer.trim(), context.language) {
         (request.confirm_reset(), false)
     } else {
         (request, true)
     }
 }
 
-/// Shows what the activity is doing on standard error while it is a terminal.
+/// Whether `answer` says yes: the English word in every language, and 예 or 네 in Korean.
+fn agrees(answer: &str, language: zk_i18n::Language) -> bool {
+    answer.eq_ignore_ascii_case("yes")
+        || (language == zk_i18n::Language::KOREAN && matches!(answer, "예" | "네"))
+}
+
+/// Shows what the activity is doing on standard error while it is a terminal that can erase it.
 fn progress(status: &str) {
-    if console::err().is_terminal() {
+    if console::live_status() {
         console::write_err(&format!("\r\x1b[2K{status}"));
     }
 }
 
 fn clear_progress() {
-    if console::err().is_terminal() {
+    if console::live_status() {
         console::write_err("\r\x1b[2K");
     }
 }
@@ -96,7 +102,16 @@ fn clear_progress() {
 mod tests {
     use serde_json::json;
 
-    use super::refused;
+    use zk_i18n::Language;
+
+    use super::{agrees, refused};
+
+    #[test]
+    fn yes_is_yes_in_every_language_and_korean_has_its_own() {
+        assert!(agrees("YES", Language::ENGLISH) && agrees("yes", Language::KOREAN));
+        assert!(agrees("예", Language::KOREAN) && agrees("네", Language::KOREAN));
+        assert!(!agrees("예", Language::ENGLISH) && !agrees("y", Language::ENGLISH));
+    }
 
     #[test]
     fn only_a_refused_receipt_counts_as_a_refusal() {

@@ -201,7 +201,7 @@ fn result_json(
 
 /// A control that shows the stage on standard error while it is a terminal.
 fn progress(system: &'static str, language: Language) -> Control {
-    if !console::err().is_terminal() {
+    if !console::live_status() {
         return Control::new();
     }
     Control::with_progress(move |stage| {
@@ -210,7 +210,7 @@ fn progress(system: &'static str, language: Language) -> Control {
 }
 
 fn clear_progress() {
-    if console::err().is_terminal() {
+    if console::live_status() {
         console::write_err("\r\x1b[2K");
     }
 }

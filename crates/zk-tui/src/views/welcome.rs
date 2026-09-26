@@ -8,6 +8,12 @@ use crate::phrases::catalog::Msg as C;
 use crate::phrases::ui::Msg as U;
 use crate::text::width;
 
+/// What the command line adds under the welcome box when it was started without a terminal: the
+/// box's slash commands cannot be typed there, so it says what can.
+pub fn not_a_terminal(language: Language) -> Entry {
+    Entry::text(Kind::Warning, U::NotATerminal.text(language))
+}
+
 /// The welcome box: the name, what this is, three commands to try and how to switch to Korean.
 pub fn welcome(museum: &Museum, language: Language) -> Entry {
     let secondary = Tone::of(Hue::Secondary);

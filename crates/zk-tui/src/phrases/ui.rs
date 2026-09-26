@@ -62,5 +62,6 @@ zk_i18n::messages! {
     UnknownSystem { en: "Unknown system '{system}'. /list or nmtzk list shows the systems in this build.", ko: "모르는 시스템: '{system}'. /list나 nmtzk list가 이 빌드의 시스템을 보여 줍니다." },
     Busy { en: "A run is still going. Press esc to stop it first.", ko: "아직 실행 중입니다. 먼저 esc로 멈추세요." },
     LanguageSet { en: "Language: {language}", ko: "언어: {language}" },
+    NotATerminal { en: "The full-screen program needs a terminal that can draw it: this is not a terminal, or TERM=dumb says it cannot draw. Give nmtzk a command instead, such as nmtzk list or nmtzk run all one-plus-one; nmtzk --help lists them all.", ko: "전체 화면 프로그램은 화면을 그릴 수 있는 터미널이 필요합니다. 여기는 터미널이 아니거나, TERM=dumb가 그릴 수 없다고 알려 줍니다. 대신 nmtzk list나 nmtzk run all one-plus-one처럼 명령을 주세요. nmtzk --help가 모든 명령을 보여 줍니다." },
     Crashed { en: "The task stopped unexpectedly: {why}", ko: "작업이 예상치 못하게 멈췄습니다: {why}" },
 }

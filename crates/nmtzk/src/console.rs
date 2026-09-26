@@ -9,8 +9,9 @@
 //! and points the descriptors themselves at `/dev/null`. Everything `nmtzk` says goes through [`out`]
 //! and [`err`]; whatever a dependency writes to descriptor 1 or 2 goes nowhere.
 //!
-//! Setting `NMTZK_UPSTREAM_OUTPUT=1` leaves descriptors 1 and 2 alone, for anyone debugging an
-//! exhibit who wants to see what its upstream prints.
+//! Setting `NMTZK_UPSTREAM_OUTPUT=1` sends what upstream crates print to standard error instead,
+//! for anyone debugging an exhibit who wants to see it; standard output stays the program's own,
+//! so JSON lines stay JSON.
 
 use std::backtrace::{Backtrace, BacktraceStatus};
 use std::fs::File;
@@ -41,8 +42,8 @@ struct Saved {
     _sink: Option<File>,
 }
 
-/// Duplicates standard output and standard error, then points descriptors 1 and 2 at `/dev/null`
-/// unless `NMTZK_UPSTREAM_OUTPUT=1`.
+/// Duplicates standard output and standard error, then points descriptors 1 and 2 at `/dev/null`,
+/// or with `NMTZK_UPSTREAM_OUTPUT=1` points descriptor 1 at standard error and leaves 2 alone.
 ///
 /// Called once after the command line is parsed (clap prints help and usage errors on the standard
 /// streams itself) and before any system runs. A descriptor is redirected only when its duplicate
@@ -52,6 +53,10 @@ pub(crate) fn start() {
         let out = io::stdout().as_fd().try_clone_to_owned().ok().map(File::from);
         let err = io::stderr().as_fd().try_clone_to_owned().ok().map(File::from);
         if std::env::var_os(UPSTREAM_OUTPUT).is_some_and(|value| value == "1") {
+            if out.is_some() {
+                let _ = io::stdout().flush();
+                let _ = rustix::stdio::dup2_stdout(io::stderr().as_fd());
+            }
             return Saved { out, err, _sink: None };
         }
         let sink = File::options().write(true).open("/dev/null").ok();
@@ -92,6 +97,13 @@ pub(crate) fn err() -> Stream {
         Some(file) => Stream::Saved(file),
         None => Stream::Stderr(io::stderr()),
     }
+}
+
+/// Whether a status line may be drawn over and over on standard error: it is a terminal, and one
+/// that understands the escape sequence that erases the line.
+pub(crate) fn live_status() -> bool {
+    let term = std::env::var("TERM").unwrap_or_default();
+    err().is_terminal() && !zk_tui::dumb_terminal(&term)
 }
 
 /// Writes `text` to the program's standard error. Failures are dropped: there is nowhere left to

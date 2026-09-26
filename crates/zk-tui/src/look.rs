@@ -3,7 +3,8 @@
 //! The program never picks RGB values: it names one of the 16 ANSI colours and lets the reader's
 //! terminal theme decide what that looks like. Consoles that cannot draw box or braille glyphs
 //! (`TERM=linux`, or `--ascii`) get ASCII stand-ins, swapped in before text is measured so that
-//! wrapping and alignment stay right.
+//! wrapping and alignment stay right. `TERM=dumb` promises no escape sequences at all, so it gets
+//! neither colour nor symbols.
 
 use std::borrow::Cow;
 use std::time::Duration;
@@ -35,8 +36,9 @@ impl Look {
     /// Reads `NO_COLOR` and `TERM`; `ascii` is the `--ascii` flag.
     pub fn detect(ascii: bool) -> Look {
         let no_color = std::env::var_os("NO_COLOR").is_some_and(|value| !value.is_empty());
-        let linux_console = std::env::var("TERM").is_ok_and(|term| term == "linux");
-        Look { color: !no_color, ascii: ascii || linux_console }
+        let term = std::env::var("TERM").unwrap_or_default();
+        let dumb = dumb_terminal(&term);
+        Look { color: !no_color && !dumb, ascii: ascii || dumb || term == "linux" }
     }
 
     /// The spinner frame for a task that has been running for `elapsed`.
@@ -95,7 +97,16 @@ impl Look {
     }
 }
 
+/// Whether `TERM` names a terminal that understands no escape sequences, where neither colour nor
+/// the full-screen program can work.
+pub fn dumb_terminal(term: &str) -> bool {
+    term == "dumb"
+}
+
 /// The ASCII stand-in for a symbol this program draws, or `None` to keep the character.
+///
+/// `·` separates items and becomes `-`; a product is written with `⋅` and becomes `*`, so that
+/// `c = a⋅b` never reads as a subtraction.
 fn ascii_stand_in(character: char) -> Option<&'static str> {
     Some(match character {
         '›' => ">",
@@ -108,6 +119,8 @@ fn ascii_stand_in(character: char) -> Option<&'static str> {
         '↓' => "v",
         '↑' => "^",
         '·' => "-",
+        '⋅' => "*",
+        '₂' => "2",
         '…' => "...",
         '─' => "-",
         '│' => "|",
@@ -134,6 +147,7 @@ mod tests {
         let look = Look { color: true, ascii: true };
         assert_eq!(look.text("› • └ ├ ✗ ⚠ 12 µs"), "> * ` + x ! 12 us");
         assert_eq!(look.text("증명"), "증명");
+        assert_eq!(look.text("c = a⋅b · log₂"), "c = a*b - log2");
         assert_eq!(Look::default().text("›"), "›");
     }
 

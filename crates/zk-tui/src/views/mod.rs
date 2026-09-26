@@ -19,7 +19,7 @@ pub use examples::examples;
 pub(crate) use help::{help, shortcuts};
 pub use run::{report, running};
 pub use stage::status;
-pub use welcome::welcome;
+pub use welcome::{not_a_terminal, welcome};
 
 use zk_core::ExampleId;
 use zk_core::catalog::{

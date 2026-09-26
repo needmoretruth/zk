@@ -37,6 +37,6 @@ pub mod views;
 
 pub use activity::{Activity, CellRef, Outbox};
 pub use app::{App, Settings};
-pub use look::Look;
+pub use look::{Look, dumb_terminal};
 pub use museum::Museum;
 pub use terminal::run;

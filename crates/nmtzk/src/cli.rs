@@ -9,7 +9,8 @@ use zk_i18n::Language;
 
 /// A working museum of zero-knowledge proof systems. Run without a command for the full-screen program.
 #[derive(Debug, Parser)]
-#[command(name = "nmtzk", version, long_about = None)]
+// A global flag given before and after the command means what it says last, wherever it is.
+#[command(name = "nmtzk", version, long_about = None, args_override_self = true)]
 pub(crate) struct Cli {
     /// Language of everything shown: en or ko.
     #[arg(long, global = true, value_name = "CODE", value_parser = parse_language, default_value = "en")]
@@ -182,8 +183,9 @@ fn parse_example(id: &str) -> Result<ExampleId, String> {
 
 /// 64 hex digits into 32 bytes.
 pub(crate) fn parse_seed(hex: &str) -> Result<[u8; 32], String> {
-    let hex = hex.strip_prefix("0x").unwrap_or(hex);
-    if hex.len() != 64 || !hex.is_ascii() {
+    let hex = hex.strip_prefix("0x").or_else(|| hex.strip_prefix("0X")).unwrap_or(hex);
+    // Checked digit by digit: `from_str_radix` alone would also take a sign such as `+f`.
+    if hex.len() != 64 || !hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
         return Err("expected 64 hex digits".to_string());
     }
     let mut seed = [0u8; 32];
@@ -212,6 +214,8 @@ mod tests {
         assert_eq!(seed, [0xab; 32]);
         assert!(parse_seed("abc").is_err());
         assert!(parse_seed(&"zz".repeat(32)).is_err());
+        assert!(parse_seed(&"+f".repeat(32)).is_err(), "a sign is not a hex digit");
+        assert_eq!(parse_seed(&format!("0X{}", "AB".repeat(32))), Ok([0xab; 32]));
     }
 
     #[test]
@@ -234,6 +238,16 @@ mod tests {
         ));
         assert!(Cli::try_parse_from(["nmtzk", "run", "all", "two-plus-two"]).is_err());
         assert!(Cli::try_parse_from(["nmtzk", "list", "moon"]).is_err());
+    }
+
+    #[test]
+    fn a_global_flag_given_twice_means_what_it_says_last() {
+        let cli = Cli::try_parse_from(["nmtzk", "--lang", "en", "--lang", "ko", "list"])
+            .expect("a repeated flag parses");
+        assert_eq!(cli.lang, Language::KOREAN);
+        let cli = Cli::try_parse_from(["nmtzk", "--lang", "ko", "list", "--lang", "en"])
+            .expect("a flag on both sides parses");
+        assert_eq!(cli.lang, Language::ENGLISH);
     }
 
     #[test]
