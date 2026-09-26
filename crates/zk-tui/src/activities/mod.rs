@@ -158,10 +158,14 @@ pub(crate) fn one_in(probability: f64) -> String {
     format!("{:.1} × 10^{exponent}", inverse / 10f64.powf(exponent))
 }
 
-/// The first `bytes` bytes of a hex string, followed by `…` when there was more.
+/// The first `bytes` bytes of a hex string, followed by `…` when there was more. Counted in
+/// characters, so text from a damaged file that is not hex is shortened too rather than cut inside
+/// a character.
 pub(crate) fn short_hex(hex: &str, bytes: usize) -> String {
-    let keep = (bytes * 2).min(hex.len());
-    if keep < hex.len() { format!("{}…", &hex[..keep]) } else { hex.to_string() }
+    match hex.char_indices().nth(bytes * 2) {
+        Some((end, _)) => format!("{}…", &hex[..end]),
+        None => hex.to_string(),
+    }
 }
 
 /// Lowercase hex of `bytes`.
@@ -185,6 +189,7 @@ mod tests {
     fn hex_is_shortened_with_an_ellipsis() {
         assert_eq!(short_hex("00112233", 2), "0011…");
         assert_eq!(short_hex("0011", 2), "0011");
+        assert_eq!(short_hex("가나다라마", 2), "가나다라…");
         assert_eq!(hex(&[0xab, 0x01]), "ab01");
     }
 

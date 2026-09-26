@@ -117,6 +117,86 @@ fn pool_keeps_its_ledger_in_the_data_dir_and_asks_before_a_reset() {
     assert!(stdout(&pool(&["wallets"])).contains("No wallets yet."));
 }
 
+/// `nmtzk pool` in `dir` with `words`, as its own process.
+fn pool_in(dir: &ScratchDir, words: &[&str]) -> std::process::Child {
+    let mut args = vec!["--data-dir", dir.path(), "--json", "pool"];
+    args.extend(words);
+    Command::new(env!("CARGO_BIN_EXE_nmtzk"))
+        .args(&args)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .expect("start nmtzk")
+}
+
+#[test]
+fn processes_sharing_a_pool_take_turns_and_every_success_is_recorded() {
+    let dir = ScratchDir::new("pool-race");
+    assert!(pool_in(&dir, &["wallet", "new", "alice"]).wait().unwrap().success());
+    let runs: Vec<_> = (0..12).map(|_| pool_in(&dir, &["faucet", "alice", "5"])).collect();
+    for run in runs {
+        let output = run.wait_with_output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stdout));
+    }
+    let ledger = records(&pool_in(&dir, &["ledger"]).wait_with_output().unwrap());
+    assert_eq!(ledger[0]["result"]["transparent"]["alice"], 60, "{:?}", ledger[0]);
+    assert_eq!(ledger[0]["result"]["transactions"].as_array().map(Vec::len), Some(12));
+}
+
+#[test]
+fn a_damaged_pool_says_how_to_start_over_and_a_reset_does_it() {
+    let dir = ScratchDir::new("pool-damaged");
+    let pool = |words: &[&str]| {
+        let mut args = vec!["--data-dir", dir.path(), "pool"];
+        args.extend(words);
+        nmtzk(&args)
+    };
+    assert!(pool(&["wallet", "new", "alice"]).status.success());
+    assert!(pool(&["faucet", "alice", "5"]).status.success());
+    let ledger = dir.0.join("pool").join("groth16").join("ledger.json");
+    std::fs::write(&ledger, "{}").unwrap();
+    let broken = pool(&["wallets"]);
+    assert_eq!(broken.status.code(), Some(1));
+    assert!(stdout(&broken).contains("nmtzk pool reset --yes"), "{}", stdout(&broken));
+
+    let reset = pool(&["reset", "--yes"]);
+    assert!(reset.status.success(), "{}", stdout(&reset));
+    assert!(!ledger.exists());
+    assert!(stdout(&pool(&["wallets"])).contains("No wallets yet."));
+    assert_eq!(pool(&["wallet", "new", "new"]).status.code(), Some(1), "`new` names no wallet");
+}
+
+#[test]
+fn every_pool_answer_reaches_a_script_reading_json_lines() {
+    let dir = ScratchDir::new("pool-json");
+    let unconfirmed = pool_in(&dir, &["reset"]).wait_with_output().unwrap();
+    assert_eq!(unconfirmed.status.code(), Some(2));
+    let said = records(&unconfirmed);
+    assert_eq!(
+        (said[0]["reset"].clone(), said[0]["needs"].clone()),
+        (false.into(), "--yes".into())
+    );
+
+    let system = dir.0.join("pool").join("system");
+    std::fs::create_dir_all(dir.0.join("pool")).unwrap();
+    std::fs::write(&system, "Halo2\n").unwrap();
+    let unknown = pool_in(&dir, &["wallets"]).wait_with_output().unwrap();
+    assert_eq!(unknown.status.code(), Some(1));
+    let error = records(&unknown)[0]["error"].as_str().unwrap_or_default().to_string();
+    assert!(error.contains("names no proof system"), "{error}");
+
+    // A file where the pool directory should be: the choice cannot be saved.
+    let blocked = ScratchDir::new("pool-json-file");
+    std::fs::write(&blocked.0, "not a directory").unwrap();
+    let args = ["--data-dir", blocked.path(), "--json", "pool", "use", "halo2"];
+    let chose = nmtzk(&args);
+    assert_eq!(chose.status.code(), Some(1));
+    let said = records(&chose);
+    assert_eq!(said.len(), 1, "{said:?}");
+    assert!(said[0]["error"].as_str().is_some_and(|why| why.contains(blocked.path())), "{said:?}");
+    let _ = std::fs::remove_file(&blocked.0);
+}
+
 #[test]
 fn ceremony_checks_every_turn_and_catches_both_cheats() {
     let output = nmtzk(&["--json", "ceremony", "tau", "--participants", "3"]);

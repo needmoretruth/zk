@@ -207,7 +207,7 @@ impl Scene<'_> {
         let mut world = World::new(self.keys.system_id(), circuit);
         for name in [ATTACKER, VICTIM] {
             world.wallets.insert(name.to_string(), WalletView::create::<F>(name)?);
-            world.ledger.faucet(name, STAKE);
+            world.ledger.faucet(name, STAKE)?;
         }
         Ok(world)
     }

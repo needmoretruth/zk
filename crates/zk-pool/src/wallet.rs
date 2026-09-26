@@ -1,7 +1,7 @@
 //! A wallet's private state: its key, and the notes only it can open and spend.
 
 use zk_circuit::ZkField;
-use zk_examples::pool::{address, nullifier};
+use zk_examples::pool::{address, note_commitment, nullifier};
 
 use crate::element::{from_hex, random, to_hex};
 use crate::error::PoolError;
@@ -55,7 +55,26 @@ impl WalletView {
             )));
         }
         self.notes.retain(|note| ledger.holds(note.position, &note.commitment));
+        let pk = address(sk);
+        let mut positions = std::collections::BTreeSet::new();
         for note in &mut self.notes {
+            // A note is its value, randomness and owner; a stored value that does not give back the
+            // stored commitment was edited, and believing it would show coins that cannot be spent.
+            let commitment = from_hex::<F>(&note.commitment)?;
+            let opened =
+                note_commitment(pk, F::from_u64(u64::from(note.value)), from_hex(&note.rcm)?);
+            if opened != commitment || to_hex(nullifier(sk, commitment)) != note.nullifier {
+                return Err(PoolError::Corrupt(format!(
+                    "wallet {file_name}: the note at position {} does not open to its commitment",
+                    note.position
+                )));
+            }
+            if !positions.insert(note.position) {
+                return Err(PoolError::Corrupt(format!(
+                    "wallet {file_name}: two notes at position {}",
+                    note.position
+                )));
+            }
             note.spent = ledger.is_spent(&note.nullifier);
         }
         self.refresh_balance();

@@ -46,7 +46,12 @@ impl<F: ZkField> Ledger<F> {
     }
 
     /// Rebuilds a ledger read from disk, refusing one made by another system, over another field,
-    /// or whose stored root does not match its commitments.
+    /// or whose totals do not follow from its own transactions.
+    ///
+    /// The transactions are the history; the tree, the roots, the nullifier set, the turnstile and
+    /// the transparent balances are what that history adds up to, and each is replayed here and
+    /// compared. An edited total (a nullifier removed so a note can be spent again, a balance
+    /// raised) is refused instead of believed.
     pub(crate) fn from_view(view: LedgerView, system: &str) -> Result<Self, PoolError> {
         let mismatch = |expected: &str, found: &str| PoolError::Mismatch {
             expected: expected.to_string(),
@@ -61,15 +66,10 @@ impl<F: ZkField> Ledger<F> {
         if view.field != F::NAME {
             return Err(mismatch(F::NAME, &view.field));
         }
-        let mut tree = new_note_tree::<F>();
-        for commitment in &view.commitments {
-            if tree.push(from_hex(commitment)?).is_none() {
-                return Err(PoolError::Corrupt("more commitments than the tree holds".into()));
-            }
-        }
         if view.circuit != SpendCircuit::Honest {
             return Err(PoolError::Corrupt("a stored ledger must use the honest circuit".into()));
         }
+        let tree = replay::<F>(&view)?;
         if to_hex(tree.root()) != view.root {
             return Err(PoolError::Corrupt("the ledger's root does not match its notes".into()));
         }
@@ -103,11 +103,16 @@ impl<F: ZkField> Ledger<F> {
     }
 
     /// Credits `account` in the open and records it; a faucet needs no proof.
-    pub(crate) fn faucet(&mut self, account: &str, amount: u16) -> TransactionRecord {
-        *self.view.transparent.entry(account.to_string()).or_insert(0) += u64::from(amount);
+    pub(crate) fn faucet(
+        &mut self,
+        account: &str,
+        amount: u16,
+    ) -> Result<TransactionRecord, PoolError> {
+        let balance = self.view.transparent.entry(account.to_string()).or_insert(0);
+        *balance = credit(*balance, amount)?;
         let transparent =
             TransparentMove { account: account.to_string(), direction: Direction::Credit, amount };
-        self.push(TransactionKind::Faucet, Some(transparent), None)
+        Ok(self.push(TransactionKind::Faucet, Some(transparent), None))
     }
 
     /// Runs every rule on a submitted transaction whose proof the verifier judged `proof`.
@@ -134,8 +139,10 @@ impl<F: ZkField> Ledger<F> {
             rejections.push(Rejection::NotEnoughTransparentFunds);
         }
         let before = self.view.pool_balance;
-        let after = i64::try_from(before).unwrap_or(i64::MAX) + i64::from(shielded.v_pub_in)
-            - i64::from(shielded.v_pub_out);
+        let after = i64::try_from(before)
+            .unwrap_or(i64::MAX)
+            .saturating_add(i64::from(shielded.v_pub_in))
+            .saturating_sub(i64::from(shielded.v_pub_out));
         if after < 0 {
             rejections.push(Rejection::TurnstileWouldGoNegative);
         }
@@ -170,9 +177,9 @@ impl<F: ZkField> Ledger<F> {
         self.view.root = to_hex(self.tree.root());
         self.view.roots_seen.push(self.view.root.clone());
         self.view.nullifiers.push(shielded.nullifier.clone());
-        let (v_in, v_out) = (u64::from(shielded.v_pub_in), u64::from(shielded.v_pub_out));
-        self.view.pool_balance = (self.view.pool_balance + v_in).saturating_sub(v_out);
-        let (kind, transparent) = self.move_transparent(&shielded, account);
+        self.view.pool_balance = credit(self.view.pool_balance, shielded.v_pub_in)?
+            .saturating_sub(u64::from(shielded.v_pub_out));
+        let (kind, transparent) = self.move_transparent(&shielded, account)?;
         Ok(self.push(kind, transparent, Some(shielded)))
     }
 
@@ -181,19 +188,19 @@ impl<F: ZkField> Ledger<F> {
         &mut self,
         shielded: &ShieldedPublic,
         account: Option<&str>,
-    ) -> (TransactionKind, Option<TransparentMove>) {
+    ) -> Result<(TransactionKind, Option<TransparentMove>), PoolError> {
         let (kind, direction, amount) = match (shielded.v_pub_in, shielded.v_pub_out) {
-            (0, 0) => return (TransactionKind::ShieldedTransfer, None),
+            (0, 0) => return Ok((TransactionKind::ShieldedTransfer, None)),
             (0, out) => (TransactionKind::Unshield, Direction::Credit, out),
             (v_in, _) => (TransactionKind::Shield, Direction::Debit, v_in),
         };
-        let Some(account) = account else { return (kind, None) };
+        let Some(account) = account else { return Ok((kind, None)) };
         let balance = self.view.transparent.entry(account.to_string()).or_insert(0);
         *balance = match direction {
-            Direction::Credit => *balance + u64::from(amount),
+            Direction::Credit => credit(*balance, amount)?,
             Direction::Debit => balance.saturating_sub(u64::from(amount)),
         };
-        (kind, Some(TransparentMove { account: account.to_string(), direction, amount }))
+        Ok((kind, Some(TransparentMove { account: account.to_string(), direction, amount })))
     }
 
     fn push(
@@ -207,4 +214,80 @@ impl<F: ZkField> Ledger<F> {
         self.view.transactions.push(record.clone());
         record
     }
+}
+
+/// `balance + amount`, or an error when a balance read from disk is so large that adding overflows.
+fn credit(balance: u64, amount: u16) -> Result<u64, PoolError> {
+    balance.checked_add(u64::from(amount)).ok_or_else(|| {
+        PoolError::Corrupt(format!("a balance of {balance} cannot grow by {amount}"))
+    })
+}
+
+/// Replays `view.transactions` from an empty ledger and checks every total the view stores against
+/// the replay, returning the commitment tree the replay built.
+fn replay<F: ZkField>(view: &LedgerView) -> Result<MerkleTree<F>, PoolError> {
+    let corrupt =
+        |what: &str| PoolError::Corrupt(format!("{what} does not follow from its transactions"));
+    let mut tree = new_note_tree::<F>();
+    if view.tree_capacity != tree.capacity() as u64 {
+        return Err(PoolError::Corrupt(format!("a tree of {} leaves", view.tree_capacity)));
+    }
+    let mut roots = vec![to_hex(tree.root())];
+    let mut commitments = Vec::new();
+    let mut nullifiers = Vec::new();
+    let mut transparent = BTreeMap::<String, u64>::new();
+    let mut pool_balance = 0u64;
+    for (index, record) in view.transactions.iter().enumerate() {
+        if record.index != index as u64 {
+            return Err(PoolError::Corrupt(format!(
+                "transaction {index} is numbered {}",
+                record.index
+            )));
+        }
+        if let Some(moved) = &record.transparent {
+            let balance = transparent.entry(moved.account.clone()).or_insert(0);
+            *balance = match moved.direction {
+                Direction::Credit => credit(*balance, moved.amount)?,
+                Direction::Debit => balance
+                    .checked_sub(u64::from(moved.amount))
+                    .ok_or_else(|| corrupt("a transparent balance"))?,
+            };
+        }
+        let Some(shielded) = &record.shielded else { continue };
+        from_hex::<F>(&shielded.nullifier)?;
+        nullifiers.push(shielded.nullifier.clone());
+        for commitment in &shielded.commitments {
+            if tree.push(from_hex(commitment)?).is_none() {
+                return Err(PoolError::Corrupt("more commitments than the tree holds".into()));
+            }
+            commitments.push(commitment.clone());
+        }
+        roots.push(to_hex(tree.root()));
+        pool_balance = credit(pool_balance, shielded.v_pub_in)?
+            .checked_sub(u64::from(shielded.v_pub_out))
+            .ok_or_else(|| corrupt("the value in the pool"))?;
+    }
+    if commitments != view.commitments {
+        return Err(corrupt("the list of note commitments"));
+    }
+    if roots != view.roots_seen {
+        return Err(corrupt("the list of roots"));
+    }
+    if nullifiers != view.nullifiers {
+        return Err(corrupt("the nullifier set"));
+    }
+    if pool_balance != view.pool_balance {
+        return Err(corrupt("the value in the pool"));
+    }
+    // Accounts at zero may or may not be listed, depending on how they got there.
+    let listed = |map: &BTreeMap<String, u64>| {
+        map.iter()
+            .filter(|(_, balance)| **balance > 0)
+            .map(|(a, b)| (a.clone(), *b))
+            .collect::<Vec<_>>()
+    };
+    if listed(&transparent) != listed(&view.transparent) {
+        return Err(corrupt("a transparent balance"));
+    }
+    Ok(tree)
 }

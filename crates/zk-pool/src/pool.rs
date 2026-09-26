@@ -64,13 +64,24 @@ impl<F: ZkField> Pool<F> {
         storage::create_dirs(&dir)?;
         let keys = Keys::new(system);
         let mut world = World::new(keys.system_id(), SpendCircuit::Honest);
-        if let Some(view) = storage::read_json::<LedgerView>(&dir.join(LEDGER_FILE))? {
+        let ledger_path = dir.join(LEDGER_FILE);
+        let stored_ledger = storage::read_json::<LedgerView>(&ledger_path)?;
+        let ledger_missing = stored_ledger.is_none();
+        if let Some(view) = stored_ledger {
             world.ledger = Ledger::from_view(view, keys.system_id())?;
         }
         for name in storage::wallet_names(&dir)? {
             let path = storage::wallet_path(&dir, &name);
             let stored = storage::read_json::<WalletView>(&path)?
                 .ok_or_else(|| PoolError::Storage(format!("{} vanished", path.display())))?;
+            // Only a recorded transaction gives a wallet a note, so notes without a ledger mean the
+            // ledger was lost. Opening an empty pool here would drop them at the next write.
+            if ledger_missing && !stored.notes.is_empty() {
+                return Err(PoolError::Corrupt(format!(
+                    "{} is missing, but wallet {name} holds notes it recorded",
+                    ledger_path.display()
+                )));
+            }
             let wallet = stored.reconcile(&name, &world.ledger)?;
             world.wallets.insert(name, wallet);
         }
@@ -90,7 +101,7 @@ impl<F: ZkField> Pool<F> {
     /// Creates a wallet: a spending key from the operating system and its address. Nothing reaches
     /// the ledger.
     pub fn new_wallet(&mut self, name: &str) -> Result<Receipt, PoolError> {
-        storage::check_name(name)?;
+        storage::check_new_name(name)?;
         if self.world.wallets.contains_key(name) {
             return Err(PoolError::WalletExists(name.to_string()));
         }
@@ -113,7 +124,7 @@ impl<F: ZkField> Pool<F> {
         self.world.wallet(name)?;
         nonzero(amount)?;
         self.transact(|world, _, _| {
-            let record = world.ledger.faucet(name, amount);
+            let record = world.ledger.faucet(name, amount)?;
             let public = PublicPart {
                 recorded: Some(record.index),
                 kind: Some(record.kind),

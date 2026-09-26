@@ -91,7 +91,7 @@ pub fn request(
 
 /// The question the command line asks before a reset, naming the pool it would empty.
 pub fn reset_question(data_dir: Option<&Path>, language: Language) -> String {
-    let system = data_root(data_dir).map(|root| chosen_system(&root)).unwrap_or_default();
+    let system = data_root(data_dir).and_then(|root| chosen_system(&root).ok()).unwrap_or_default();
     fill(P::ResetPrompt.text(language), &[("system", system.name())])
 }
 

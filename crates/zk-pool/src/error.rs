@@ -12,6 +12,8 @@ use zk_core::SystemError;
 pub enum PoolError {
     /// Wallet names become file names, so only `a`–`z`, `0`–`9`, `-` and `_`, 1 to 32 of them.
     InvalidName(String),
+    /// `new` is the word that creates a wallet (`wallet new <name>`), so no wallet can be called that.
+    ReservedName(String),
     /// A wallet with this name already exists.
     WalletExists(String),
     /// No wallet has this name.
@@ -65,6 +67,7 @@ impl fmt::Display for PoolError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidName(name) => write!(f, "{name:?} is not a valid wallet name"),
+            Self::ReservedName(name) => write!(f, "{name:?} is reserved and cannot name a wallet"),
             Self::WalletExists(name) => write!(f, "wallet {name} already exists"),
             Self::UnknownWallet(name) => write!(f, "no wallet named {name}"),
             Self::ZeroAmount => write!(f, "the amount is zero"),

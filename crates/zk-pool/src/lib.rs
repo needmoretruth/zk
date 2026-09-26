@@ -27,6 +27,9 @@
 //!   history but would not verify under the new keys.
 //! - **Hashing.** Addresses, commitments, nullifiers and the tree use `ToyHash`, which is not a real
 //!   hash.
+//!
+//! A directory is one pool, whatever the number of processes using it: a process that reads the
+//! pool, changes it and writes it back holds [`lock`] from the first read to the last write.
 
 mod attack;
 mod element;
@@ -49,4 +52,5 @@ pub use receipt::{
     Receipt, Rejection, ShieldedPublic, SpendCircuit, TransactionKind, TransactionRecord,
     TransparentMove,
 };
+pub use storage::{PoolLock, lock, remove_pool};
 pub use view::{LedgerView, NoteRecord, WalletView};

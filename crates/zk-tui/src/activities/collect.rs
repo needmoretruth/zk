@@ -74,7 +74,12 @@ pub fn collect(
             }
             Event::Record(value) => collected.records.push(value),
             Event::Status(text) => status(&text),
-            Event::Crashed(why) => cells.push((None, crashed(&why))),
+            Event::Crashed(why) => {
+                // A script reading JSON lines hears about it too, in the shape a failed run uses.
+                let error = serde_json::json!({ "error": { "kind": "crashed", "detail": why } });
+                collected.records.push(error);
+                cells.push((None, crashed(&why)));
+            }
             Event::Subject(_) | Event::Stage(_) => {}
             Event::Done => break,
         }

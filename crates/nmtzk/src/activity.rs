@@ -12,7 +12,8 @@ use crate::print::{Context, USAGE, write_out};
 /// Runs `command` with `words` and prints its cells, or its records as JSON lines.
 ///
 /// Exits 2 when the words do not parse or a reset was not confirmed, 1 when a cell reports an
-/// error, and 0 otherwise.
+/// error or the ledger refused a transaction the reader asked for, and 0 otherwise. An attack's
+/// refusals are what it came to show, so they do not count.
 pub(crate) fn run(command: &str, words: &[String], context: &Context) -> ExitCode {
     let language = context.language;
     let request = match activities::request(command, words, language, context.data_dir.clone()) {
@@ -45,18 +46,26 @@ pub(crate) fn run(command: &str, words: &[String], context: &Context) -> ExitCod
     }
     if unconfirmed {
         ExitCode::from(USAGE)
-    } else if collected.failed() {
+    } else if collected.failed() || refused(&collected.records) {
         ExitCode::FAILURE
     } else {
         ExitCode::SUCCESS
     }
 }
 
+/// Whether a pool receipt says the ledger refused the transaction. Attacks report their steps, not a
+/// receipt, so their refusals never match.
+fn refused(records: &[serde_json::Value]) -> bool {
+    records.iter().any(|record| record["result"]["decision"]["accepted"] == false)
+}
+
 /// Asks before a reset when someone is at the terminal. Returns the request, confirmed if they
 /// typed `yes`, and whether they declined. Without a terminal the reset stays unconfirmed, and
-/// the activity says how to confirm it.
+/// the activity says how to confirm it; so it does when standard error is not the terminal, since
+/// the question would go where nobody reads it and the program would wait for an answer.
 fn confirm(request: Request, context: &Context) -> (Request, bool) {
-    if !request.unconfirmed_reset() || !std::io::stdin().is_terminal() {
+    let someone_asked = std::io::stdin().is_terminal() && console::err().is_terminal();
+    if !request.unconfirmed_reset() || !someone_asked {
         return (request, false);
     }
     let question = activities::reset_question(context.data_dir.as_deref(), context.language);
@@ -80,5 +89,22 @@ fn progress(status: &str) {
 fn clear_progress() {
     if console::err().is_terminal() {
         console::write_err("\r\x1b[2K");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::refused;
+
+    #[test]
+    fn only_a_refused_receipt_counts_as_a_refusal() {
+        let receipt = |accepted| json!({ "result": { "decision": { "accepted": accepted } } });
+        assert!(refused(&[json!({ "result": { "wallets": [] } }), receipt(false)]));
+        assert!(!refused(&[receipt(true)]));
+        let faucet = json!({ "result": { "decision": null } });
+        let attack = json!({ "result": { "steps": [{ "decision": { "accepted": false } }] } });
+        assert!(!refused(&[faucet, attack]));
     }
 }

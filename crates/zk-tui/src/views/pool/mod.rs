@@ -85,6 +85,7 @@ pub(crate) fn error(error: &PoolError, language: Language) -> Entry {
     let text = |msg: M, values: &[(&str, &str)]| fill(msg.text(language), values);
     let text = match error {
         PoolError::InvalidName(name) => text(M::ErrInvalidName, &[("name", name)]),
+        PoolError::ReservedName(name) => text(M::ErrReservedName, &[("name", name)]),
         PoolError::WalletExists(name) => text(M::ErrWalletExists, &[("name", name)]),
         PoolError::UnknownWallet(name) => text(M::ErrUnknownWallet, &[("name", name)]),
         PoolError::ZeroAmount => text(M::ErrZeroAmount, &[]),

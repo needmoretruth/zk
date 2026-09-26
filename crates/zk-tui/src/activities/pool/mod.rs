@@ -158,19 +158,51 @@ impl Activity for PoolRun {
             outbox.open(Entry::text(Kind::Error, M::NoDataDir.text(language)));
             return;
         };
-        let system = chosen_system(&root);
+        if let PoolAction::Use(chosen) = &self.action {
+            match choose_system(&root, *chosen) {
+                Ok(()) => {
+                    let record =
+                        json!({ "activity": "pool", "action": "use", "system": chosen.key() });
+                    outbox.record(record);
+                    outbox.open(view::chosen(*chosen, &pool_dir(&root, *chosen), language));
+                }
+                Err(error) => {
+                    outbox.record(
+                        json!({ "activity": "pool", "action": "use", "error": error.to_string() }),
+                    );
+                    outbox.open(view::error(&error, language));
+                }
+            }
+            return;
+        }
+        let system = match chosen_system(&root) {
+            Ok(system) => system,
+            Err(error) => {
+                outbox.record(json!({ "activity": "pool", "error": error.to_string() }));
+                outbox.open(view::error(&error, language));
+                return;
+            }
+        };
         let dir = pool_dir(&root, system);
+        let waiting = || outbox.status(M::WaitingForLock.text(language));
         match &self.action {
             PoolAction::Reset { confirmed: false } => {
+                outbox.record(json!({
+                    "activity": "pool",
+                    "system": system.key(),
+                    "reset": false,
+                    "needs": "--yes",
+                }));
                 outbox.open(view::confirm_reset(system, language));
             }
-            PoolAction::Use(chosen) => {
-                let entry = match choose_system(&root, *chosen) {
-                    Ok(()) => view::chosen(*chosen, &pool_dir(&root, *chosen), language),
-                    Err(error) => view::error(&PoolError::Storage(error.to_string()), language),
-                };
-                outbox
-                    .record(json!({ "activity": "pool", "action": "use", "system": chosen.key() }));
+            // Before the pool is opened, so that a pool whose files are damaged can be emptied.
+            PoolAction::Reset { confirmed: true } => {
+                let result =
+                    self.cache.reset((system, &dir), control, waiting).map(|()| Outcome::Reset);
+                let (entry, record) = shown(result, &self.action, system, language);
+                if let Some(record) = record {
+                    outbox.record(record);
+                }
                 outbox.open(entry);
             }
             action => {
@@ -179,7 +211,7 @@ impl Activity for PoolRun {
                     outbox.status(status);
                     outbox.open(entry)
                 });
-                let result = self.cache.with((system, &dir), control, |pool| match pool {
+                let result = self.cache.with((system, &dir), control, waiting, |pool| match pool {
                     AnyPool::Groth16(pool) => perform(pool, action),
                     AnyPool::Halo2(pool) => perform(pool, action),
                 });
@@ -242,12 +274,11 @@ fn perform<F: ZkField>(pool: &mut Pool<F>, action: &PoolAction) -> Result<Outcom
         }
         PoolAction::Ledger => Outcome::Ledger(pool.ledger()),
         PoolAction::Attack(attack) => Outcome::Attack(pool.attack(*attack)?),
-        PoolAction::Reset { .. } => {
-            pool.reset()?;
-            Outcome::Reset
+        // Help, choosing a system and resetting never open a pool; were they to reach one, showing
+        // its ledger is harmless.
+        PoolAction::Help | PoolAction::Use(_) | PoolAction::Reset { .. } => {
+            Outcome::Ledger(pool.ledger())
         }
-        // Help and choosing a system never reach a pool; were they to, the ledger is harmless.
-        PoolAction::Help | PoolAction::Use(_) => Outcome::Ledger(pool.ledger()),
     })
 }
 

@@ -52,18 +52,40 @@ pub fn pool_dir(root: &Path, system: PoolSystem) -> PathBuf {
     pools(root).join(system.key())
 }
 
-/// The proof system chosen with `use`; Groth16 until one is chosen, or when the file names none.
-pub fn chosen_system(root: &Path) -> PoolSystem {
-    fs::read_to_string(pools(root).join(SYSTEM_FILE))
-        .ok()
-        .and_then(|text| PoolSystem::from_key(text.trim()))
-        .unwrap_or_default()
+/// The proof system chosen with `use`; Groth16 until one is chosen.
+///
+/// Only a missing file means nothing was chosen. A file that cannot be read or names no system is
+/// an error, because falling back to Groth16 would quietly show another pool's wallets.
+pub fn chosen_system(root: &Path) -> Result<PoolSystem, PoolError> {
+    let path = pools(root).join(SYSTEM_FILE);
+    match fs::read_to_string(&path) {
+        Ok(text) => PoolSystem::from_key(text.trim()).ok_or_else(|| {
+            PoolError::Corrupt(format!(
+                "{} names no proof system: {:?}",
+                path.display(),
+                text.trim()
+            ))
+        }),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(PoolSystem::default()),
+        Err(error) => Err(PoolError::Storage(format!("reading {}: {error}", path.display()))),
+    }
 }
 
-/// Remembers `system` for the next command.
-pub fn choose_system(root: &Path, system: PoolSystem) -> std::io::Result<()> {
-    fs::create_dir_all(pools(root))?;
-    fs::write(pools(root).join(SYSTEM_FILE), format!("{}\n", system.key()))
+/// Remembers `system` for the next command, replacing the file in one rename so that a reader never
+/// finds it half written.
+pub fn choose_system(root: &Path, system: PoolSystem) -> Result<(), PoolError> {
+    let dir = pools(root);
+    let path = dir.join(SYSTEM_FILE);
+    let temp = dir.join(format!("{SYSTEM_FILE}.{}.tmp", std::process::id()));
+    let storage = |what: &str, at: &Path, error: std::io::Error| {
+        PoolError::Storage(format!("{what} {}: {error}", at.display()))
+    };
+    fs::create_dir_all(&dir).map_err(|e| storage("creating", &dir, e))?;
+    fs::write(&temp, format!("{}\n", system.key())).map_err(|e| storage("writing", &temp, e))?;
+    fs::rename(&temp, &path).map_err(|e| {
+        let _ = fs::remove_file(&temp);
+        storage("renaming over", &path, e)
+    })
 }
 
 /// A pool of either proof system the museum offers.
@@ -130,12 +152,18 @@ impl PoolCache {
 
     /// Runs `act` on the pool for `system` in `dir`, opening it first unless it is already open
     /// and unchanged on disk, and keeps it open afterwards.
+    ///
+    /// The pool directory's lock is held from before the files are compared until after `act` has
+    /// written them, so a command line and a screen using one pool take turns; `waiting` is called
+    /// if the other one is in the middle of something.
     pub(crate) fn with<T>(
         &self,
         (system, dir): (PoolSystem, &Path),
         control: &Control,
+        waiting: impl FnOnce(),
         act: impl FnOnce(&mut AnyPool) -> Result<T, PoolError>,
     ) -> Result<T, PoolError> {
+        let _files = zk_pool::lock(dir, control, waiting)?;
         let mut guard = self.lock();
         let reusable = guard.as_ref().is_some_and(|kept| {
             kept.system == system && kept.dir == dir && kept.stamp == stamp(dir)
@@ -151,6 +179,30 @@ impl PoolCache {
         let result = act(&mut pool);
         *guard = Some(Kept { dir: dir.to_path_buf(), system, stamp: stamp(dir), pool });
         result
+    }
+
+    /// Deletes the ledger and wallets of the pool for `system` in `dir` without reading them, so a
+    /// pool whose files are damaged can be started over. A pool kept open for it forgets its world
+    /// but keeps its keys.
+    pub(crate) fn reset(
+        &self,
+        (system, dir): (PoolSystem, &Path),
+        control: &Control,
+        waiting: impl FnOnce(),
+    ) -> Result<(), PoolError> {
+        let _files = zk_pool::lock(dir, control, waiting)?;
+        let mut guard = self.lock();
+        match guard.as_mut() {
+            Some(kept) if kept.system == system && kept.dir == dir => {
+                match &mut kept.pool {
+                    AnyPool::Groth16(pool) => pool.reset()?,
+                    AnyPool::Halo2(pool) => pool.reset()?,
+                }
+                kept.stamp = stamp(dir);
+            }
+            _ => zk_pool::remove_pool(dir)?,
+        }
+        Ok(())
     }
 }
 
@@ -179,5 +231,21 @@ mod tests {
         let flag = Path::new("/tmp/x");
         assert_eq!(resolve_root(Some(flag), false, env(&[])), Some(PathBuf::from("/tmp/x")));
         assert_eq!(pool_dir(flag, PoolSystem::Halo2), PathBuf::from("/tmp/x/pool/halo2"));
+    }
+
+    #[test]
+    fn only_a_missing_system_file_means_groth16() {
+        let root = std::env::temp_dir().join(format!("nmtzk-system-file-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        assert_eq!(chosen_system(&root), Ok(PoolSystem::Groth16));
+        assert_eq!(choose_system(&root, PoolSystem::Halo2), Ok(()));
+        assert_eq!(chosen_system(&root), Ok(PoolSystem::Halo2));
+        for damaged in ["Halo2\n", "", "halo2 \u{ff}"] {
+            fs::write(pools(&root).join(SYSTEM_FILE), damaged).ok();
+            assert!(matches!(chosen_system(&root), Err(PoolError::Corrupt(_))), "{damaged:?}");
+        }
+        let entries = fs::read_dir(pools(&root)).map(|dir| dir.count()).unwrap_or_default();
+        assert_eq!(entries, 1, "no temporary file is left beside the system file");
+        let _ = fs::remove_dir_all(&root);
     }
 }
