@@ -83,3 +83,26 @@ fn upstream_prints_stay_out_of_json_lines_and_error_output() {
     assert!(stderr.is_empty(), "nothing on standard error: {stderr}");
     assert!(run.status.success(), "{stdout}");
 }
+
+#[test]
+fn completion_scripts_print_for_every_shell_and_touch_nothing_else() {
+    let data_dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join("completions-data-dir");
+    let _ = std::fs::remove_dir_all(&data_dir);
+    let data_dir_arg = data_dir.to_str().expect("utf-8 path");
+    for shell in ["bash", "zsh", "fish", "elvish", "powershell"] {
+        let output = nmtzk(&["--data-dir", data_dir_arg, "completions", shell]);
+        assert!(output.status.success(), "{shell}");
+        let script = String::from_utf8_lossy(&output.stdout);
+        assert!(script.contains("nmtzk"), "{shell}: {script}");
+        assert!(script.contains("completions"), "{shell} completes the subcommand itself");
+        assert!(output.stderr.is_empty(), "{shell}: {}", String::from_utf8_lossy(&output.stderr));
+    }
+    assert!(!data_dir.exists(), "no data directory for a completion script");
+}
+
+#[test]
+fn completions_for_an_unknown_shell_exit_with_a_usage_error() {
+    let output = nmtzk(&["completions", "tcsh"]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+}

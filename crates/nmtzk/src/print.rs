@@ -3,6 +3,7 @@
 use std::io::Write;
 use std::process::ExitCode;
 
+use clap::CommandFactory;
 use serde_json::json;
 use zk_core::{Control, ExampleId, ProofSystem, RunError, RunOptions, RunReport};
 use zk_i18n::Language;
@@ -11,7 +12,7 @@ use zk_tui::doc::Entry;
 use zk_tui::plain::Printer;
 use zk_tui::views::{self, Comparison};
 
-use crate::cli::Command;
+use crate::cli::{Cli, Command};
 use crate::console;
 
 /// Exit code for a command line that names something this binary does not have.
@@ -94,12 +95,23 @@ pub(crate) fn command(command: Command, context: &Context) -> ExitCode {
             let options = RunOptions { seed, attacks: !no_attacks };
             run(&target, example, &options, context)
         }
+        Command::Completions { shell } => {
+            write_out(&completions(shell));
+            ExitCode::SUCCESS
+        }
         Command::Cave { .. }
         | Command::Trio { .. }
         | Command::Pool { .. }
         | Command::Ceremony { .. }
         | Command::Forge { .. } => ExitCode::from(USAGE),
     }
+}
+
+/// The completion script for one shell, generated from the same definition the parser uses.
+fn completions(shell: clap_complete::Shell) -> String {
+    let mut script = Vec::new();
+    clap_complete::generate(shell, &mut Cli::command(), "nmtzk", &mut script);
+    String::from_utf8_lossy(&script).into_owned()
 }
 
 fn about(id: &str, context: &Context) -> ExitCode {

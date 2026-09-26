@@ -113,6 +113,14 @@ pub(crate) enum Command {
         #[arg(value_name = "TARGET")]
         words: Vec<String>,
     },
+    /// Print a completion script for a shell: bash, zsh, fish, elvish or powershell.
+    ///
+    /// The script goes to standard output and nothing else runs. For bash, for example:
+    /// `nmtzk completions bash > ~/.local/share/bash-completion/completions/nmtzk`.
+    Completions {
+        /// The shell to complete for.
+        shell: clap_complete::Shell,
+    },
 }
 
 impl Command {
@@ -143,7 +151,8 @@ impl Command {
             Command::List { .. }
             | Command::About { .. }
             | Command::Examples
-            | Command::Run { .. } => {
+            | Command::Run { .. }
+            | Command::Completions { .. } => {
                 return None;
             }
         })
@@ -225,5 +234,15 @@ mod tests {
         ));
         assert!(Cli::try_parse_from(["nmtzk", "run", "all", "two-plus-two"]).is_err());
         assert!(Cli::try_parse_from(["nmtzk", "list", "moon"]).is_err());
+    }
+
+    #[test]
+    fn completions_take_one_of_five_shells() {
+        for shell in ["bash", "zsh", "fish", "elvish", "powershell"] {
+            let cli = Cli::try_parse_from(["nmtzk", "completions", shell]).expect("known shell");
+            assert!(matches!(cli.command, Some(Command::Completions { .. })), "{shell}");
+        }
+        assert!(Cli::try_parse_from(["nmtzk", "completions", "tcsh"]).is_err());
+        assert!(Cli::try_parse_from(["nmtzk", "completions"]).is_err());
     }
 }
