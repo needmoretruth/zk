@@ -1,0 +1,153 @@
+# A pushed version tag, turned into a GitHub Release a reader can install from.
+#
+# The tag is the version: `v0.1.0` releases the workspace at 0.1.0, and a tag that does not match
+# Cargo.toml stops everything before a single build, because a binary that prints one version under
+# a name that promises another is worse than no binary. Each archive holds the program, its licence,
+# both READMEs and the completion scripts that very binary prints; each binary runs once on its own
+# machine before it is packed. The compiler comes from rust-toolchain.toml, as in check.yml.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  # By hand, for a tag that already exists: the release is built from that tag, not from a branch.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, e.g. v0.1.0"
+        required: true
+
+# Read-only everywhere except the job that publishes; the builds run third-party build scripts. For
+# the same reason no checkout leaves its token on disk; nothing after it needs one.
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: never
+  # A fresh runner never reads incremental data back; check.yml gets the same from rust-cache.
+  CARGO_INCREMENTAL: 0
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+# Plain `bash` adds -o pipefail to the default -e, so a cargo that fails inside a pipeline fails the
+# step rather than handing jq nothing.
+defaults:
+  run:
+    shell: bash
+
+# No cache, unlike check.yml: a release restoring what another run saved could ship what that run's
+# build scripts left behind, and a cache saved for one tag is never restored for the next.
+jobs:
+  # The tag without its `v`, checked against the one number in Cargo.toml.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+      - run: rustup toolchain install
+      - id: version
+        run: |
+          if [[ "$TAG" != v* ]]; then
+            echo "::error::Tag $TAG does not start with v; release tags are v<version>, e.g. v0.1.0."
+            exit 1
+          fi
+          tagged="${TAG#v}"
+          declared="$(cargo metadata --no-deps --format-version 1 --locked \
+            | jq -r '.packages[] | select(.name == "nmtzk") | .version')"
+          if [ "$tagged" != "$declared" ]; then
+            echo "::error::Tag $TAG says version $tagged, but Cargo.toml says $declared. Raise the workspace version in Cargo.toml, or tag v$declared."
+            exit 1
+          fi
+          echo "version=$declared" >> "$GITHUB_OUTPUT"
+
+  # The whole test suite once, on the platform the museum is built for; nothing is released without it.
+  test:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+      - run: rustup toolchain install
+      - run: cargo test --workspace --locked
+
+  # One archive per target, each built on a machine of that target so the binary can print its own
+  # completion scripts. Intel macOS has its own runner until GitHub retires the architecture.
+  build:
+    needs: [version, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linked on Ubuntu 24.04, the Linux binaries need its glibc, 2.39, or newer. Named rather
+          # than ubuntu-latest, which moves to 26.04 from October 2026, so that floor moves only
+          # here; 22.04 (glibc 2.35) is deprecated and retires in April 2027.
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-24.04
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-24.04-arm
+          - target: x86_64-apple-darwin
+            os: macos-15-intel
+          - target: aarch64-apple-darwin
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      ARCHIVE: nmtzk-${{ needs.version.outputs.version }}-${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+      - run: rustup toolchain install
+      # Added after the install, so it lands on the toolchain rust-toolchain.toml names.
+      - run: rustup target add ${{ matrix.target }}
+      - run: cargo build --release --locked -p nmtzk --target ${{ matrix.target }}
+      - name: Package
+        run: |
+          binary="target/${{ matrix.target }}/release/nmtzk"
+          # The binary this machine built, run once before anyone downloads it.
+          "$binary" --version
+          "$binary" examples > /dev/null
+          mkdir -p "$ARCHIVE/completions"
+          cp "$binary" LICENSE README.md README.ko.md "$ARCHIVE/"
+          "$binary" completions bash > "$ARCHIVE/completions/nmtzk.bash"
+          "$binary" completions zsh > "$ARCHIVE/completions/_nmtzk"
+          "$binary" completions fish > "$ARCHIVE/completions/nmtzk.fish"
+          for script in "$ARCHIVE"/completions/*; do
+            test -s "$script" || { echo "::error::$script is empty"; exit 1; }
+          done
+          tar -czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          # shasum is on both Linux and macOS runners; `shasum -c` on the reader's side checks it.
+          shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ARCHIVE }}
+          path: |
+            ${{ env.ARCHIVE }}.tar.gz
+            ${{ env.ARCHIVE }}.tar.gz.sha256
+          if-no-files-found: error
+
+  # Every archive and checksum in one release, named after the tag.
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          gh release create "$TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "nmtzk $VERSION" \
+            --generate-notes
