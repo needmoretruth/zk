@@ -4118,7 +4118,7 @@ dependencies = [
 
 [[package]]
 name = "nmtzk"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "clap",
  "clap_complete",
@@ -6433,7 +6433,7 @@ dependencies = [
 
 [[package]]
 name = "sys-bctv14"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ark-bn254 0.6.0",
  "ark-ec 0.6.0",
@@ -6449,7 +6449,7 @@ dependencies = [
 
 [[package]]
 name = "sys-bulletproofs"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bulletproofs",
  "clear_on_drop",
@@ -6461,7 +6461,7 @@ dependencies = [
 
 [[package]]
 name = "sys-circle-stark"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "p3-air",
  "p3-challenger 0.7.0",
@@ -6483,7 +6483,7 @@ dependencies = [
 
 [[package]]
 name = "sys-gkr"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bincode 1.3.3",
  "blake3",
@@ -6499,7 +6499,7 @@ dependencies = [
 
 [[package]]
 name = "sys-gm17"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ark-bls12-381 0.3.0",
  "ark-ff 0.3.0",
@@ -6514,7 +6514,7 @@ dependencies = [
 
 [[package]]
 name = "sys-groth16"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bellman",
  "bls12_381",
@@ -6527,7 +6527,7 @@ dependencies = [
 
 [[package]]
 name = "sys-halo2"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ff 0.13.1",
  "halo2_proofs 0.3.5",
@@ -6539,7 +6539,7 @@ dependencies = [
 
 [[package]]
 name = "sys-ligero"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "getrandom 0.4.3",
  "p3-dft 0.7.0",
@@ -6553,7 +6553,7 @@ dependencies = [
 
 [[package]]
 name = "sys-marlin"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ark-bls12-381 0.3.0",
  "ark-ff 0.3.0",
@@ -6571,7 +6571,7 @@ dependencies = [
 
 [[package]]
 name = "sys-miden"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "miden-assembly",
@@ -6589,7 +6589,7 @@ dependencies = [
 
 [[package]]
 name = "sys-nova"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bincode 2.0.1",
  "ff 0.13.1",
@@ -6602,7 +6602,7 @@ dependencies = [
 
 [[package]]
 name = "sys-plonk"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "lambdaworks-crypto",
  "lambdaworks-math",
@@ -6613,7 +6613,7 @@ dependencies = [
 
 [[package]]
 name = "sys-plonky3"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "p3-air",
  "p3-baby-bear",
@@ -6636,7 +6636,7 @@ dependencies = [
 
 [[package]]
 name = "sys-schnorr"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ff 0.13.1",
  "group 0.13.0",
@@ -6652,7 +6652,7 @@ dependencies = [
 
 [[package]]
 name = "sys-spartan"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bincode 1.3.3",
  "curve25519-dalek 4.1.3",
@@ -6665,7 +6665,7 @@ dependencies = [
 
 [[package]]
 name = "sys-stark"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bincode 2.0.1",
  "lambdaworks-math",
@@ -6677,7 +6677,7 @@ dependencies = [
 
 [[package]]
 name = "sys-ultraplonk"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ark-bn254 0.5.0",
  "ark-ff 0.5.0",
@@ -6692,7 +6692,7 @@ dependencies = [
 
 [[package]]
 name = "sys-winterfell"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "winter-air",
@@ -6708,7 +6708,7 @@ dependencies = [
 
 [[package]]
 name = "sys-zkboo"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "getrandom 0.4.3",
  "p3-field 0.7.0",
@@ -7660,7 +7660,7 @@ dependencies = [
 
 [[package]]
 name = "zk-cave"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "getrandom 0.4.3",
  "p3-field 0.7.0",
@@ -7674,7 +7674,7 @@ dependencies = [
 
 [[package]]
 name = "zk-ceremony"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bellman",
  "bls12_381",
@@ -7688,7 +7688,7 @@ dependencies = [
 
 [[package]]
 name = "zk-circuit"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ark-bn254 0.6.0",
  "ark-ff 0.6.0",
@@ -7699,7 +7699,7 @@ dependencies = [
 
 [[package]]
 name = "zk-core"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ark-bn254 0.6.0",
  "ark-ff 0.6.0",
@@ -7715,7 +7715,7 @@ dependencies = [
 
 [[package]]
 name = "zk-examples"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ark-bn254 0.6.0",
  "ark-ff 0.6.0",
@@ -7727,11 +7727,11 @@ dependencies = [
 
 [[package]]
 name = "zk-i18n"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "zk-pool"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "getrandom 0.4.3",
  "hex",
@@ -7746,7 +7746,7 @@ dependencies = [
 
 [[package]]
 name = "zk-registry"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "sys-bctv14",
  "sys-bulletproofs",
@@ -7775,7 +7775,7 @@ dependencies = [
 
 [[package]]
 name = "zk-trio"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "getrandom 0.4.3",
  "p3-field 0.7.0",
@@ -7788,7 +7788,7 @@ dependencies = [
 
 [[package]]
 name = "zk-tui"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "crossterm",
  "getrandom 0.4.3",
